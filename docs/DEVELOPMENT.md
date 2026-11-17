@@ -288,7 +288,10 @@ powershell -ExecutionPolicy Bypass -File windows\install.ps1
 ```
 
 This builds the DLL, copies it to `C:\Program Files\Bunny Keyboard`, tells
-Windows about it, and adds the keyboard to your Khmer language. Windows
+Windows about it, and adds the keyboard to your Khmer language. If the PC had
+no Khmer, the installer adds the language with Bunny Keyboard as its only
+keyboard (not Windows' own Khmer layout), and `-Remove` takes the language off
+again once it has no keyboards left. Windows
 asks for administrator permission once, for the copying and the telling. Then
 press Windows+Space and choose "Singkhmer (Bunny Keyboard)". Apps that were
 already open may need a restart before they offer it.

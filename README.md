@@ -25,15 +25,20 @@ powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/rel
 Windows asks for permission to change your PC: click **Yes**. That is all.
 You do not need to download the project or install anything else.
 
-Then press **Windows + Space** and pick **Singkhmer (Bunny Keyboard)**:
+Then press **Windows + Space**. Under Khmer there is one keyboard,
+**Singkhmer (Bunny Keyboard)**: pick it.
 
 ```
-ENG  English (United States)
 ខ្មែរ  Khmer
-     Singkhmer (Bunny Keyboard)      ← this one
+     Singkhmer (Bunny Keyboard)
 ```
 
 Apps that were already open may need a restart before they offer it.
+
+If your PC already had Khmer, its Windows Khmer keyboard stays in the list
+too, as "Khmer / Khmer". To keep only Bunny Keyboard, open **Settings → Time &
+language → Language & region**, click **⋯** next to Khmer, **Language
+options**, and remove the keyboard named **Khmer**.
 
 Needs 64-bit Windows 10 or 11.
 
@@ -98,6 +103,9 @@ To remove the keyboard, paste this into Command Prompt or PowerShell:
 ```
 powershell -ep bypass -c "& ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove"
 ```
+
+If Khmer was in your language list only for Bunny Keyboard, it is taken off
+too, so your PC is back to how it was.
 
 ## Good to know
 

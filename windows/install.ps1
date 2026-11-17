@@ -202,12 +202,18 @@ function Get-BuiltDll {
 function Set-Keyboards([bool]$Present) {
     $languages = Get-WinUserLanguageList
     $khmer = $languages | Where-Object { $_.LanguageTag -eq 'km' -or $_.LanguageTag -like 'km-*' } | Select-Object -First 1
+    $changed = @()
     if (-not $khmer) {
         if (-not $Present) { return @() }
         $languages.Add('km')
         $khmer = $languages[$languages.Count - 1]
+        # Windows adds its own Khmer keyboard with the language. This PC did
+        # not have Khmer before, so Bunny Keyboard is the only one it needs.
+        foreach ($tip in @($khmer.InputMethodTips)) {
+            [void]$khmer.InputMethodTips.Remove($tip)
+        }
+        $changed += 'km'
     }
-    $changed = @()
     foreach ($tip in $RetiredTips) {
         if ($khmer.InputMethodTips -contains $tip) {
             [void]$khmer.InputMethodTips.Remove($tip)
@@ -223,6 +229,11 @@ function Set-Keyboards([bool]$Present) {
             [void]$khmer.InputMethodTips.Remove($tip)
             $changed += $tip
         }
+    }
+    # Removing the last Khmer keyboard: take the language off too, or Windows
+    # would put its own Khmer keyboard back in the list.
+    if (-not $Present -and $changed -and $khmer.InputMethodTips.Count -eq 0) {
+        [void]$languages.Remove($khmer)
     }
     if ($changed) {
         Set-WinUserLanguageList $languages -Force -WarningAction SilentlyContinue
