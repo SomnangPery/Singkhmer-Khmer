@@ -44,6 +44,7 @@ param(
                 $arguments += '-Remove'
             } else {
                 Get-File 'khmer_tsf.dll' $dll
+                Get-File 'my-words.ps1' (Join-Path $folder 'my-words.ps1')
                 $arguments += @('-Dll', $dll)
             }
             # Windows will ask for permission to change the PC: say Yes.

@@ -40,6 +40,8 @@ pub(crate) struct Candidate {
     pub text: String,
     pub latin: bool,
     pub score: f32,
+    /// The score is final: the language model is not asked about this word.
+    pub fixed: bool,
 }
 
 struct Line {
@@ -158,6 +160,7 @@ impl Lexicon {
                 text: token.to_string(),
                 latin: true,
                 score: 0.0,
+                fixed: true,
             }];
         }
         let typed = token.to_ascii_lowercase();
@@ -197,6 +200,7 @@ impl Lexicon {
                 text: self.words[word].0.clone(),
                 latin: false,
                 score,
+                fixed: false,
             })
             .collect();
 
@@ -210,6 +214,7 @@ impl Lexicon {
             text: token.to_string(),
             latin: true,
             score,
+            fixed: true,
         });
         candidates
     }

@@ -19,7 +19,8 @@ use windows::Win32::UI::TextServices::{
     TF_TMAE_SECUREMODE,
 };
 
-use crate::candidates::CandidateWindow;
+use crate::candidates::{CandidateWindow, View};
+use crate::my_words;
 use crate::display::{clear_attribute, set_attribute, AttributeList, InputAttribute};
 use crate::edit::{caret_place, caret_to_end, edit, text_place};
 use crate::keys::{self, KeyAction, Modifiers};
@@ -328,22 +329,23 @@ fn finish(this: &ComObject<TextService>) {
 }
 
 fn refresh_window(this: &ComObject<TextService>) {
-    let (items, highlight, mut anchor, window, allowed) = {
+    let (view, mut anchor, window, allowed) = {
         let mut inner = this.inner.borrow_mut();
         let items = if inner.mode == Mode::Romanized && inner.composition.is_some() {
             inner.engine.candidates()
         } else {
             Vec::new()
         };
-        (
+        let view = View {
+            header: inner.engine.typed(),
             items,
-            inner.highlight,
-            inner.anchor,
-            inner.window.take(),
-            inner.show_window,
-        )
+            highlight: inner.highlight,
+            footer: my_words::editor().map(|_| "Add my word".to_string()),
+            hover: None,
+        };
+        (view, inner.anchor, inner.window.take(), inner.show_window)
     };
-    if items.is_empty() || !allowed {
+    if view.items.is_empty() || !allowed {
         this.put_back(window, |window| window.hide());
         return;
     }
@@ -356,12 +358,22 @@ fn refresh_window(this: &ComObject<TextService>) {
                 Ok(())
             });
         }));
+        let service = this.clone();
+        window.on_footer(Rc::new(move || {
+            let _ = guard(|| {
+                // The last word typed is the one the user wants to add.
+                let typed = service.inner.borrow().engine.typed();
+                let spelling = typed.split_whitespace().last().unwrap_or("").to_string();
+                my_words::open_editor(&spelling);
+                Ok(())
+            });
+        }));
         Some(window)
     });
     if anchor == RECT::default() {
         anchor = caret_place().unwrap_or_default();
     }
-    this.put_back(window, |window| window.show(items, highlight, anchor));
+    this.put_back(window, |window| window.show(view, anchor));
 }
 
 fn pick(this: &ComObject<TextService>, index: usize) {
@@ -423,6 +435,11 @@ fn on_key(
     }
     if test {
         return Ok(TRUE);
+    }
+    // A word the user just added works at once. Tests type with the built-in
+    // words only, whatever this PC's user added.
+    if mode == Mode::Romanized && this.inner.borrow().test_mode.is_none() {
+        crate::my_words::refresh();
     }
 
     let target = this.inner.borrow().context.clone().unwrap_or_else(|| context.clone());

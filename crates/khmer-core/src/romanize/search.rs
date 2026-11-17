@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::lexicon::Lexicon;
 use super::model::LanguageModel;
-use super::{Sentence, Word};
+use super::{user, Sentence, Word};
 
 const BEAM_WIDTH: usize = 5;
 const SUGGESTIONS: usize = 3;
@@ -22,7 +22,8 @@ pub(crate) fn search(
         score: 0.0,
     }];
     for token in tokens {
-        let candidates = lexicon.candidates(token);
+        let mut candidates = user::candidates(token);
+        candidates.extend(lexicon.candidates(token));
         let mut longer = Vec::with_capacity(beam.len() * candidates.len());
         for sentence in &beam {
             let history: Vec<&str> = previous
@@ -32,7 +33,7 @@ pub(crate) fn search(
                 .collect();
             let history = &history[history.len().saturating_sub(2)..];
             for candidate in &candidates {
-                let score = if candidate.latin {
+                let score = if candidate.fixed {
                     candidate.score
                 } else {
                     candidate.score + LANGUAGE_MODEL_WEIGHT * model.log_prob(history, &candidate.text)

@@ -103,6 +103,14 @@ impl Phrase {
         format!("{}{}", self.lead(top), join(&words))
     }
 
+    pub(crate) fn typed(&self) -> String {
+        let mut tokens = self.done.clone();
+        if !self.current.is_empty() {
+            tokens.push(self.current.clone());
+        }
+        tokens.join(" ")
+    }
+
     pub(crate) fn candidates(&self) -> Vec<String> {
         self.best.iter().map(Sentence::text).collect()
     }

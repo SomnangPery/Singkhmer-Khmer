@@ -59,6 +59,15 @@ impl Engine {
         !self.composer.is_empty() || !self.phrase.is_empty()
     }
 
+    /// The Latin letters of the phrase being typed in romanized mode, its
+    /// tokens separated by spaces ("nh jg tv"). Empty in Khmer mode.
+    pub fn typed(&self) -> String {
+        match self.mode {
+            Mode::Khmer => String::new(),
+            Mode::Romanized => self.phrase.typed(),
+        }
+    }
+
     pub fn candidates(&self) -> Vec<String> {
         match self.mode {
             Mode::Khmer => Vec::new(),

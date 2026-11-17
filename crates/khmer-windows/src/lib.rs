@@ -5,6 +5,7 @@ pub mod candidates;
 mod display;
 mod edit;
 pub mod keys;
+mod my_words;
 mod register;
 pub mod service;
 

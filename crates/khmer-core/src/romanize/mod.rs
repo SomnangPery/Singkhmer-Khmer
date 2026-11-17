@@ -3,12 +3,14 @@ mod model;
 mod phrase;
 mod search;
 mod skeleton;
+mod user;
 
 use std::sync::OnceLock;
 
 pub use lexicon::{DataError, Lexicon};
 pub use model::{LanguageModel, SeedModel};
 pub(crate) use phrase::Phrase;
+pub use user::{parse_user_word, set_user_words};
 
 const WORDS: &str = include_str!("../../data/words.tsv");
 const IMPORTED: &str = include_str!("../../data/words-imported.tsv");

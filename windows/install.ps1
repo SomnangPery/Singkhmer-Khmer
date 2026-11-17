@@ -16,6 +16,8 @@ $Keyboards = @(
 $Tips = $Keyboards | ForEach-Object { "0453:$TextService$_" }
 
 $DllName = 'khmer_tsf.dll'
+$EditorName = 'my-words.ps1'
+$Shortcut = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Khmer Keyboard - My words.lnk'
 $Regsvr32 = Join-Path $env:windir 'System32\regsvr32.exe'
 
 function Test-Administrator {
@@ -58,7 +60,32 @@ function Install-AsAdmin {
     if ($code -ne 0) {
         throw "Windows did not accept the keyboard (regsvr32 gave error $code). Nothing was registered."
     }
+    Install-Editor
     "Installed $installed"
+}
+
+# The "my words" editor, and a Start menu entry for it. The keyboard finds the
+# editor next to the DLL.
+function Install-Editor {
+    $editor = Join-Path $PSScriptRoot $EditorName
+    if (-not (Test-Path $editor)) { return }
+    $installed = Join-Path $InstallDir $EditorName
+    Copy-Item $editor $installed -Force
+    $powershell = Join-Path $env:windir 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    $shell = New-Object -ComObject WScript.Shell
+    $link = $shell.CreateShortcut($Shortcut)
+    $link.TargetPath = $powershell
+    $link.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$installed`""
+    $link.Description = 'Add your own Singkhmer words to the Khmer Keyboard'
+    $link.IconLocation = (Join-Path $env:windir 'System32\input.dll') + ',0'
+    $link.Save()
+    "Added 'Khmer Keyboard - My words' to the Start menu"
+}
+
+function Remove-Editor {
+    if (Test-Path $Shortcut) { Remove-Item $Shortcut -Force }
+    $installed = Join-Path $InstallDir $EditorName
+    if (Test-Path $installed) { Remove-Item $installed -Force }
 }
 
 function Remove-AsAdmin {
@@ -70,6 +97,7 @@ function Remove-AsAdmin {
         }
         Clear-InstalledDll
     }
+    Remove-Editor
     Remove-OldCopies
     if ((Test-Path $InstallDir) -and -not (Get-ChildItem $InstallDir -Force)) {
         Remove-Item $InstallDir

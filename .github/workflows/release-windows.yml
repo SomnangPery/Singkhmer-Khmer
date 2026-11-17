@@ -31,7 +31,7 @@ jobs:
       - name: Put it on the release
         shell: pwsh
         run: |
-          $files = 'target/release/khmer_tsf.dll', 'windows/install.ps1', 'windows/setup.ps1'
+          $files = 'target/release/khmer_tsf.dll', 'windows/install.ps1', 'windows/setup.ps1', 'windows/my-words.ps1'
           gh release view $env:TAG *> $null
           if ($LASTEXITCODE -ne 0) {
             gh release create $env:TAG --title "Khmer keyboard $env:TAG" --generate-notes @files
