@@ -1,0 +1,40 @@
+# Builds the Windows keyboard and puts it on a GitHub release, so that
+# windows/setup.ps1 can install it on any PC without Rust.
+#
+# To make a release: git tag v0.1.0 && git push origin v0.1.0
+name: Release the Windows keyboard
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build and upload to (for example v0.1.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build khmer_tsf.dll
+        run: cargo build --release --locked -p khmer-windows
+
+      - name: Put it on the release
+        shell: pwsh
+        run: |
+          $files = 'target/release/khmer_tsf.dll', 'windows/install.ps1', 'windows/setup.ps1'
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:TAG --title "Khmer keyboard $env:TAG" --generate-notes @files
+          } else {
+            gh release upload $env:TAG --clobber @files
+          }

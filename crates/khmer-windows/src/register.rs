@@ -1,12 +1,3 @@
-//! Telling Windows that the keyboard exists, and taking that back.
-//!
-//! Three things are written, all under "all users", which is why this needs
-//! an administrator:
-//!
-//! 1. where the DLL for the text service is (the COM registration);
-//! 2. the two keyboards it offers, under the Khmer language;
-//! 3. what kind of text service it is.
-
 use windows::core::{Error, Result, GUID, PCWSTR};
 use windows::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS, MAX_PATH, TRUE, WIN32_ERROR};
 use windows::Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER};
@@ -17,22 +8,20 @@ use windows::Win32::System::Registry::{
 };
 use windows::Win32::UI::Input::KeyboardAndMouse::HKL;
 use windows::Win32::UI::TextServices::{
-    ITfCategoryMgr, ITfInputProcessorProfileMgr, CLSID_TF_CategoryMgr, CLSID_TF_InputProcessorProfiles,
-    GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,
-    GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, GUID_TFCAT_TIP_KEYBOARD,
+    CLSID_TF_CategoryMgr, CLSID_TF_InputProcessorProfiles, ITfCategoryMgr, ITfInputProcessorProfileMgr,
+    GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
+    GUID_TFCAT_TIP_KEYBOARD,
 };
 
 use crate::{module_instance, CLSID_TEXT_SERVICE, LANGUAGE_KHMER, PROFILE_KHMER, PROFILE_SINGKHMER};
 
 const SERVICE_NAME: &str = "Khmer Keyboard";
 
-/// The keyboards, with the names the Windows keyboard list shows.
-const PROFILES: [(GUID, &str); 2] =
-    [(PROFILE_SINGKHMER, "Singkhmer (Khmer Keyboard)"), (PROFILE_KHMER, "Khmer NiDA (Khmer Keyboard)")];
+const PROFILES: [(GUID, &str); 2] = [
+    (PROFILE_SINGKHMER, "Singkhmer (Khmer Keyboard)"),
+    (PROFILE_KHMER, "Khmer NiDA (Khmer Keyboard)"),
+];
 
-/// What Windows should know about the service: it is a keyboard, it works in
-/// Store apps and the Start menu too, it shows in the taskbar, and it says
-/// how text being typed should look.
 const CATEGORIES: [GUID; 4] = [
     GUID_TFCAT_TIP_KEYBOARD,
     GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,
@@ -40,7 +29,6 @@ const CATEGORIES: [GUID; 4] = [
     GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,
 ];
 
-/// `{1AF035EE-A180-...}`, the way the registry writes a GUID.
 pub(crate) fn braced(guid: &GUID) -> String {
     format!("{{{guid:?}}}")
 }
@@ -61,12 +49,10 @@ fn clsid_key() -> String {
     format!("CLSID\\{}", braced(&CLSID_TEXT_SERVICE))
 }
 
-/// Writes one text value. An empty `name` is the key's default value.
 fn set_value(key: &str, name: &str, value: &str) -> Result<()> {
     let key = wide(key);
     let name = wide(name);
     let value = wide(value);
-    // The registry takes the text as bytes, with its closing zero.
     let bytes: Vec<u8> = value.iter().flat_map(|unit| unit.to_le_bytes()).collect();
     let mut handle = HKEY::default();
     unsafe {
@@ -113,7 +99,6 @@ pub(crate) fn register() -> Result<()> {
                 LANGUAGE_KHMER,
                 &profile,
                 &name,
-                // No icon: the taskbar shows the language's own sign.
                 &[],
                 0,
                 HKL::default(),
@@ -130,12 +115,9 @@ pub(crate) fn register() -> Result<()> {
     Ok(())
 }
 
-/// Removes everything `register` wrote. Parts that are already gone are
-/// skipped, so this can clean up after a registration that failed half way.
 pub(crate) fn unregister() -> Result<()> {
     unsafe {
-        if let Ok(categories) =
-            CoCreateInstance::<_, ITfCategoryMgr>(&CLSID_TF_CategoryMgr, None, CLSCTX_INPROC_SERVER)
+        if let Ok(categories) = CoCreateInstance::<_, ITfCategoryMgr>(&CLSID_TF_CategoryMgr, None, CLSCTX_INPROC_SERVER)
         {
             for category in CATEGORIES {
                 let _ = categories.UnregisterCategory(&CLSID_TEXT_SERVICE, &category, &CLSID_TEXT_SERVICE);
@@ -169,14 +151,15 @@ mod tests {
         assert_eq!(braced(&CLSID_TEXT_SERVICE), "{1AF035EE-A180-4349-AD63-A5FC35FE4122}");
     }
 
-    /// The install script adds the keyboards to the user's language list by
-    /// these same identities, written out by hand.
     #[test]
     fn the_install_script_names_the_same_keyboards() {
         let script = include_str!("../../../windows/install.ps1");
         assert!(script.contains(&format!("$TextService = '{}'", braced(&CLSID_TEXT_SERVICE))));
         for (profile, name) in PROFILES {
-            assert!(script.contains(&format!("'{}'", braced(&profile))), "{name} is missing from install.ps1");
+            assert!(
+                script.contains(&format!("'{}'", braced(&profile))),
+                "{name} is missing from install.ps1"
+            );
         }
         assert!(script.contains(&format!("\"{LANGUAGE_KHMER:04X}:$TextService$_\"")));
     }

@@ -14,12 +14,6 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/**
- * Draws every key layout on the computer, without a phone, and saves each as
- * a picture in the build folder's `keyboard-previews`. Run it with
- * `gradlew testDebugUnitTest` after changing a layout or the drawing code, and
- * look at the pictures.
- */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w411dp-h891dp-420dpi")
@@ -34,7 +28,6 @@ class KeyboardPreviewTest {
                 for (shifted in listOf(false, true)) {
                     val layout = Layouts.get(mode, layer, shifted)
                     val name = "$mode $layer shifted=$shifted"
-                    // Five rows everywhere, so the keyboard never changes height.
                     assertEquals(name, 5, layout.rows.size)
                     for (row in layout.rows) {
                         val width = row.sumOf { it.width.toDouble() }
@@ -56,11 +49,8 @@ class KeyboardPreviewTest {
             for (mode in InputMode.values()) {
                 for (layer in Layer.values()) {
                     for (shift in listOf(ShiftState.OFF, ShiftState.LOCKED)) {
-                        // Shift only changes the letters.
                         if (layer != Layer.LETTERS && shift != ShiftState.OFF) continue
-                        // The symbol pages differ between modes only in two labels.
                         if (layer != Layer.LETTERS && mode == InputMode.SINGKHMER) continue
-                        // Dark colours are checked on one layout of each kind.
                         if (night && (layer != Layer.LETTERS || shift != ShiftState.OFF)) continue
 
                         val view = KeyboardView(context, palette)

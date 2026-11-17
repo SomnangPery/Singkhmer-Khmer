@@ -1,34 +1,10 @@
-//! Spelling variants.
-//!
-//! People romanize the same Khmer sound in several ways: "khmer" or "kmer",
-//! "chong" or "jong", "mouy" or "muy". Instead of listing every combination in
-//! the dictionary, each spelling is reduced to a "skeleton" in which those
-//! differences are gone. Two spellings with the same skeleton are variants of
-//! each other.
+const SAME_SOUND: &[(&str, &str)] = &[("kh", "k"), ("ch", "j"), ("ou", "o"), ("u", "o"), ("ia", "ea")];
 
-/// Letter groups that are treated as the same sound: the left side is rewritten
-/// to the right side. Rules are applied top to bottom, so a longer group must
-/// come before a shorter one that it contains ("ou" before "u").
-///
-/// These are the rules from the design document. To add one, add a line here
-/// and a case to the test below.
-const SAME_SOUND: &[(&str, &str)] = &[
-    ("kh", "k"),
-    ("ch", "j"),
-    ("ou", "o"),
-    ("u", "o"),
-    ("ia", "ea"),
-];
-
-/// Reduces a lowercase spelling to its skeleton.
-///
-/// Doubled letters are also folded into one ("bongg" and "bong" match).
 pub(crate) fn skeleton(spelling: &str) -> String {
     let mut reduced = fold_doubled_letters(spelling);
     for (from, to) in SAME_SOUND {
         reduced = reduced.replace(from, to);
     }
-    // A rule can create a new double ("muoy" -> "mooy"), so fold again.
     fold_doubled_letters(&reduced)
 }
 
@@ -52,13 +28,13 @@ mod tests {
 
     #[test]
     fn each_variant_rule() {
-        assert!(same("khmer", "kmer")); // kh <-> k
-        assert!(same("chong", "jong")); // ch <-> j
-        assert!(same("mouy", "moy")); // ou <-> o
-        assert!(same("mouy", "muy")); // ou <-> u
-        assert!(same("kon", "kun")); // o <-> u
-        assert!(same("rean", "rian")); // ea <-> ia
-        assert!(same("bong", "bongg")); // doubled letters
+        assert!(same("khmer", "kmer"));
+        assert!(same("chong", "jong"));
+        assert!(same("mouy", "moy"));
+        assert!(same("mouy", "muy"));
+        assert!(same("kon", "kun"));
+        assert!(same("rean", "rian"));
+        assert!(same("bong", "bongg"));
         assert!(same("saat", "sat"));
     }
 

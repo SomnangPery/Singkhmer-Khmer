@@ -1,67 +1,38 @@
-//! The language model: how likely a word is after the words before it.
-//!
-//! [`LanguageModel`] is the interface the converter uses. [`SeedModel`] is a
-//! small stand-in built from hand-written estimates. The real model, counted
-//! from a text corpus (roadmap step 2), will implement the same trait, so the
-//! rest of the engine does not change.
-
 use std::collections::HashMap;
 
 use super::lexicon::{data_lines, DataError, Lexicon};
 use crate::normalize::normalize;
 
-/// Scores a word given the words before it.
 pub trait LanguageModel: Send + Sync {
-    /// The natural logarithm of the probability of `word` coming next.
-    ///
-    /// `previous` holds up to two words that come before it, the nearest one
-    /// last. It is empty at the start of a sentence. A word the model does not
-    /// know (for example one kept in Latin letters) may appear in `previous`.
     fn log_prob(&self, previous: &[&str], word: &str) -> f32;
 }
 
-/// How the start of a sentence is written in `pairs.tsv`.
 const START: &str = "<s>";
-/// Weight of a word's overall frequency when its pair is not listed.
 const BACKOFF: f32 = 0.4;
-/// Probability given to a word the model has never seen.
 const UNSEEN: f32 = 1e-7;
 
-/// A stand-in language model made from two hand-written tables:
-///
-/// * how common each word is (the count column of `words.tsv`),
-/// * which word pairs go together (`data/pairs.tsv`).
-///
-/// `pairs.tsv` has one pair per line:
-///
-/// ```text
-/// first word <TAB> next word <TAB> percent
-/// ចង់         <TAB> ទៅ        <TAB> 12
-/// ```
-///
-/// meaning "about 12% of the time, the word after ចង់ is ទៅ". `<s>` as the
-/// first word means the start of a sentence. It only looks one word back.
 pub struct SeedModel {
-    /// Word -> probability of the word on its own.
     alone: HashMap<String, f32>,
-    /// First word -> next word -> probability of that next word.
     pairs: HashMap<String, HashMap<String, f32>>,
 }
 
 impl SeedModel {
-    /// Builds the model from the dictionary's word counts and the text of
-    /// `pairs.tsv`. Every word in a pair must be in the dictionary.
     pub fn new(lexicon: &Lexicon, pairs: &str) -> Result<SeedModel, DataError> {
         let total: f32 = lexicon.words().map(|(_, count)| count).sum();
         let alone = lexicon
             .words()
             .map(|(word, count)| (word.to_string(), count / total))
             .collect();
-        let mut model = SeedModel { alone, pairs: HashMap::new() };
+        let mut model = SeedModel {
+            alone,
+            pairs: HashMap::new(),
+        };
         for (line, text) in data_lines(pairs) {
-            model
-                .add_pair(lexicon, text)
-                .map_err(|message| DataError { file: "pairs", line, message })?;
+            model.add_pair(lexicon, text).map_err(|message| DataError {
+                file: "pairs",
+                line,
+                message,
+            })?;
         }
         Ok(model)
     }
@@ -69,7 +40,11 @@ impl SeedModel {
     fn add_pair(&mut self, lexicon: &Lexicon, line: &str) -> Result<(), String> {
         let mut columns = line.split('\t');
         let first = columns.next().unwrap_or("").trim();
-        let first = if first == START { first.to_string() } else { normalize(first) };
+        let first = if first == START {
+            first.to_string()
+        } else {
+            normalize(first)
+        };
         let next = normalize(columns.next().unwrap_or("").trim());
         let percent = columns.next().unwrap_or("").trim();
 

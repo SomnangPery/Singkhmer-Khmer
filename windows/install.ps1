@@ -1,57 +1,18 @@
-<#
-.SYNOPSIS
-Puts the Khmer keyboard on this PC, or takes it off again.
-
-.DESCRIPTION
-Run it from the project folder, in Windows PowerShell:
-
-    powershell -ExecutionPolicy Bypass -File windows\install.ps1
-    powershell -ExecutionPolicy Bypass -File windows\install.ps1 -Remove
-
-Installing does four things:
-
-  1. builds khmer_tsf.dll (the optimised build);
-  2. copies it to "C:\Program Files\Khmer Keyboard";
-  3. tells Windows about it (regsvr32), for all users of this PC;
-  4. adds its two keyboards, Singkhmer and Khmer NiDA, to your Khmer language.
-
-Steps 2 and 3 need an administrator, so Windows asks for permission once.
-Step 4 is for your own account only: other users of this PC add the keyboards
-themselves, under Settings > Time & language > Language & region > Khmer.
-
-Run it again after changing the code to put the new build in place. Apps that
-were open keep the old build until they are restarted.
-
-.PARAMETER Remove
-Takes the keyboard off this PC instead of installing it.
-
-.PARAMETER Dll
-Install this khmer_tsf.dll instead of building one.
-
-.PARAMETER InstallDir
-Where the DLL is kept. Leave it alone unless you know why: apps from the
-Microsoft Store can only load the keyboard from a folder such as Program Files.
-#>
 param(
     [switch]$Remove,
     [string]$Dll,
     [string]$InstallDir = (Join-Path $env:ProgramFiles 'Khmer Keyboard'),
-    # Used by the script itself, for the part that runs as administrator.
     [switch]$AsAdmin,
     [string]$Log
 )
 
 $ErrorActionPreference = 'Stop'
 
-# These must be the same as in crates/khmer-windows/src/lib.rs. A test there
-# fails if they are not.
 $TextService = '{1AF035EE-A180-4349-AD63-A5FC35FE4122}'
 $Keyboards = @(
-    '{2E577226-7197-4E08-93B6-E5F7DA9937F4}'   # Singkhmer
-    '{7B70356C-154C-445B-B08A-E771770C5538}'   # Khmer NiDA
+    '{2E577226-7197-4E08-93B6-E5F7DA9937F4}'
+    '{7B70356C-154C-445B-B08A-E771770C5538}'
 )
-# How Windows names a keyboard in a language's list: the language number (0453
-# is Khmer), then the text service, then the keyboard.
 $Tips = $Keyboards | ForEach-Object { "0453:$TextService$_" }
 
 $DllName = 'khmer_tsf.dll'
@@ -62,9 +23,6 @@ function Test-Administrator {
     $me.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-# ---- the part that needs an administrator ----
-
-# Old copies of the DLL that some app was still using when it was replaced.
 function Remove-OldCopies {
     if (Test-Path $InstallDir) {
         Get-ChildItem $InstallDir -Filter '*.old' | ForEach-Object {
@@ -73,9 +31,6 @@ function Remove-OldCopies {
     }
 }
 
-# Takes the installed DLL out of the way. An app that has the keyboard loaded
-# keeps the file open, and Windows will not delete an open file, but it will
-# rename one. The renamed copy is deleted by a later run.
 function Clear-InstalledDll {
     $installed = Join-Path $InstallDir $DllName
     if (-not (Test-Path $installed)) { return }
@@ -128,8 +83,6 @@ function Remove-AsAdmin {
 }
 
 if ($AsAdmin) {
-    # What is said here goes into a file: this window closes before anyone
-    # could read it.
     try {
         $said = if ($Remove) { Remove-AsAdmin } else { Install-AsAdmin }
         if ($Log) { $said | Set-Content -Path $Log -Encoding UTF8 }
@@ -140,10 +93,6 @@ if ($AsAdmin) {
     }
 }
 
-# ---- the part that runs as you ----
-
-# Runs the administrator part: here if this is already an administrator's
-# window, otherwise in a new one, after Windows has asked for permission.
 function Invoke-AdminPart([string[]]$Arguments) {
     $log = Join-Path $env:TEMP ("khmer-keyboard-{0}.log" -f [Guid]::NewGuid().ToString('N'))
     $all = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-AsAdmin',
@@ -187,8 +136,6 @@ function Get-BuiltDll {
     $built
 }
 
-# Adds the keyboards to, or takes them out of, the Khmer language in your own
-# list of languages. Returns the keyboards it changed.
 function Set-Keyboards([bool]$Present) {
     $languages = Get-WinUserLanguageList
     $khmer = $languages | Where-Object { $_.LanguageTag -eq 'km' -or $_.LanguageTag -like 'km-*' } | Select-Object -First 1
@@ -216,8 +163,6 @@ function Set-Keyboards([bool]$Present) {
 
 try {
     if ($Remove) {
-        # Out of the language list first, so that no app is left with a
-        # keyboard selected that is no longer there.
         [void](Set-Keyboards $false)
         Invoke-AdminPart @('-Remove')
         Write-Host "The Khmer keyboard is removed."

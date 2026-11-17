@@ -13,19 +13,12 @@ import android.view.MotionEvent
 import android.view.View
 import kotlin.math.min
 
-/**
- * Draws the keys of a [KeyboardLayout] and turns touches into key presses.
- * It knows nothing about Khmer or about the app being typed into: every press
- * goes to the [Listener].
- */
 @SuppressLint("ViewConstructor")
 class KeyboardView(context: Context, private val palette: Palette) : View(context) {
 
     interface Listener {
-        /** A key was pressed and let go. Backspace repeats while it is held. */
         fun onKeyTap(key: Key)
 
-        /** A key is being held. Return true if that did something. */
         fun onKeyLongPress(key: Key): Boolean
     }
 
@@ -44,7 +37,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
             invalidate()
         }
 
-    /** A word for the Enter key ("Search", "Send"), or null for the arrow. */
     var enterLabel: String? = null
         set(value) {
             field = value
@@ -56,11 +48,8 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
     private var rows: List<List<PlacedKey>> = emptyList()
     private var rowHeight = 0f
 
-    // The key under the finger. A second finger landing finishes the first
-    // key at once, so fast two-thumb typing loses no letters.
     private var activePointer = -1
     private var activeKey: Key? = null
-    /** True once the press has done its work (a long press, or Backspace). */
     private var consumed = false
     private var repeating = false
 
@@ -109,7 +98,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        // Shorter keys when the screen is short (a phone held sideways).
         val screenHeight = resources.displayMetrics.heightPixels
         val height = min(context.dp(50f) * ROWS, screenHeight * 0.45f)
         setMeasuredDimension(width, (height + topPadding + bottomPadding).toInt())
@@ -140,7 +128,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         }
     }
 
-    /** The key nearest to a point: touches in the gaps and margins still count. */
     private fun keyAt(x: Float, y: Float): Key? {
         if (rows.isEmpty()) return null
         val index = ((y - topPadding) / rowHeight).toInt().coerceIn(0, rows.size - 1)
@@ -158,7 +145,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
             }
             MotionEvent.ACTION_MOVE -> {
                 val index = event.findPointerIndex(activePointer)
-                // A key that has already done its work stays as it is.
                 if (index >= 0 && !consumed && !repeating) {
                     val key = keyAt(event.getX(index), event.getY(index))
                     if (key !== activeKey) slideTo(key)
@@ -180,7 +166,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         if (key != null) {
             performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             if (key.action == KeyAction.BACKSPACE) {
-                // Backspace acts at once and repeats while held.
                 listener?.onKeyTap(key)
                 consumed = true
                 repeating = true
@@ -192,7 +177,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         invalidate()
     }
 
-    /** The finger slid from one key to another without lifting. */
     private fun slideTo(key: Key?) {
         timers.removeCallbacks(longPress)
         activeKey = key
@@ -254,8 +238,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
                 if (held == null) {
                     drawLabel(canvas, visible(key.label), context.sp(21f), ink)
                 } else {
-                    // The label sits a little lower and smaller, to leave the
-                    // top corner to the character that holding the key gives.
                     drawLabel(canvas, visible(key.label), context.sp(19f), ink, lower = context.dp(4f))
                     canvas.drawText(visible(held), keyRect.right - context.dp(2f), keyRect.top + context.sp(10f), hintPaint)
                 }
@@ -263,10 +245,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         }
     }
 
-    /**
-     * A Khmer vowel or sign has nothing to sit on when it is alone on a key,
-     * so it is drawn on a dotted circle, the usual placeholder.
-     */
     private fun visible(label: String): String {
         val first = label.firstOrNull() ?: return label
         val isMark = first in 'ា'..'៓' || first == '៝'
@@ -276,7 +254,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
     private fun drawLabel(canvas: Canvas, label: String, size: Float, color: Int, lower: Float = 0f) {
         textPaint.color = color
         textPaint.textSize = size
-        // Shrink a label that is too wide for its key.
         val room = keyRect.width() - context.dp(4f)
         val width = textPaint.measureText(label)
         if (width > room && width > 0) textPaint.textSize = size * room / width
@@ -285,10 +262,8 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         canvas.drawText(label, keyRect.centerX(), baseline, textPaint)
     }
 
-    /** Half the size of an icon, which is drawn around the centre of the key. */
     private fun iconHalf(): Float = min(min(keyRect.width(), keyRect.height()) * 0.24f, context.dp(10f))
 
-    /** An upward arrow: outlined when off, filled when on, underlined when locked. */
     private fun drawShift(canvas: Canvas) {
         val h = iconHalf()
         val cx = keyRect.centerX()
@@ -313,7 +288,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         }
     }
 
-    /** A box pointed to the left, with a cross in it. */
     private fun drawBackspace(canvas: Canvas, color: Int) {
         val h = iconHalf()
         val cx = keyRect.centerX()
@@ -334,7 +308,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         canvas.drawLine(x - arm, cy + arm, x + arm, cy - arm, iconPaint)
     }
 
-    /** An arrow that goes down and then left. */
     private fun drawEnter(canvas: Canvas, color: Int) {
         val h = iconHalf()
         val cx = keyRect.centerX()
@@ -351,7 +324,6 @@ class KeyboardView(context: Context, private val palette: Palette) : View(contex
         canvas.drawPath(iconPath, iconPaint)
     }
 
-    /** A globe: the usual sign for "change language". */
     private fun drawGlobe(canvas: Canvas, color: Int) {
         val r = iconHalf() * 0.95f
         val cx = keyRect.centerX()

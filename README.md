@@ -102,6 +102,7 @@ crates/khmer-windows/       the Windows keyboard (builds khmer_tsf.dll)
   tests/typing.rs           types into a stand-in text field through the real Windows text framework
   tests/preview.rs          draws the suggestion window into a picture
 windows/install.ps1         installs the Windows keyboard on this PC, or removes it
+windows/setup.ps1           the one-line install from GitHub: downloads the release, runs install.ps1
 ```
 
 ## Running it
@@ -246,7 +247,28 @@ Ctrl and Alt shortcuts are always left to the app.
 
 ### Installing it
 
-From the project folder, in Windows PowerShell:
+On any 64-bit Windows 10 or 11 PC, with no Rust and no copy of the project,
+paste this into Windows PowerShell:
+
+```
+irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex
+```
+
+It downloads the keyboard from the latest release and runs `install.ps1` on
+it. Windows asks for administrator permission once. Then press Windows+Space:
+"Singkhmer (Khmer Keyboard)" and "Khmer NiDA (Khmer Keyboard)" are listed
+under Khmer. To take it off again:
+
+```
+& ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove
+```
+
+A release is made by pushing a tag (`git tag v0.1.0`, then
+`git push origin v0.1.0`): `.github/workflows/release-windows.yml` builds
+`khmer_tsf.dll` on GitHub and attaches it, `install.ps1` and `setup.ps1` to
+the release.
+
+To build and install from the project folder instead, in Windows PowerShell:
 
 ```
 powershell -ExecutionPolicy Bypass -File windows\install.ps1

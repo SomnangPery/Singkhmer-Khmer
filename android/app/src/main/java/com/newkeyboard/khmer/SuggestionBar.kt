@@ -14,14 +14,9 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 
-/**
- * The strip above the keys that shows the engine's suggestions, best first.
- * Suggestions are whole phrases and can be long, so the strip scrolls sideways.
- */
 @SuppressLint("ViewConstructor")
 class SuggestionBar(context: Context, private val palette: Palette) : HorizontalScrollView(context) {
 
-    /** Called with the number of the suggestion that was tapped. */
     var onPick: ((Int) -> Unit)? = null
 
     private val row = LinearLayout(context)
@@ -53,7 +48,6 @@ class SuggestionBar(context: Context, private val palette: Palette) : Horizontal
         minWidth = context.dp(72f).toInt()
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
         setTextColor(palette.text)
-        // The first suggestion is the one Space and Enter use.
         if (index == 0) setTypeface(typeface, Typeface.BOLD)
         val side = context.dp(14f).toInt()
         setPadding(side, 0, side, 0)

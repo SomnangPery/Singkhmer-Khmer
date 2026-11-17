@@ -1,27 +1,11 @@
-//! The phrase being typed in romanized mode, one key at a time.
-//!
-//! The whole phrase stays "composing" until it is finished, so a later word
-//! can still change the reading of an earlier one:
-//!
-//! * a letter adds to the token being typed, which is shown as typed;
-//! * Space ends the token, and it turns into the top suggestion's Khmer word;
-//! * a second Space, any other character, or picking a suggestion commits the
-//!   phrase to the app.
-
 use super::{join, Romanizer, Sentence};
 use crate::normalize::normalize;
 use crate::validate::is_valid;
 
-/// After this many tokens the phrase is committed on the next Space, so the
-/// composing text cannot grow without end.
 const MAX_TOKENS: usize = 8;
 
-/// What this engine last wrote into the app, right before the phrase. Decides
-/// whether a space is needed in between: Latin words are set off by spaces,
-/// Khmer words are not.
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 enum Tail {
-    /// Nothing, or something that already separates words.
     #[default]
     Nothing,
     Khmer,
@@ -30,15 +14,10 @@ enum Tail {
 
 #[derive(Default)]
 pub(crate) struct Phrase {
-    /// The last two committed words, as context for the language model.
     previous: Vec<String>,
     tail: Tail,
-    /// Tokens finished with Space, as typed.
     done: Vec<String>,
-    /// The token being typed.
     current: String,
-    /// The best sentences for `done` + `current`, best first. Empty only when
-    /// nothing is being typed.
     best: Vec<Sentence>,
 }
 
@@ -47,43 +26,36 @@ impl Phrase {
         self.done.is_empty() && self.current.is_empty()
     }
 
-    /// A letter key.
     pub(crate) fn letter(&mut self, letter: char) {
         self.current.push(letter);
         self.refresh();
     }
 
-    /// The Space key. Returns the text to commit, if any.
     pub(crate) fn space(&mut self) -> String {
         if !self.current.is_empty() {
-            // End the token. The tokens are the same as before, so `best` is too.
             self.done.push(std::mem::take(&mut self.current));
-            return if self.done.len() >= MAX_TOKENS { self.take() } else { String::new() };
+            return if self.done.len() >= MAX_TOKENS {
+                self.take()
+            } else {
+                String::new()
+            };
         }
-        // Space with no token in progress is a real space: finish the phrase.
         self.other(' ')
     }
 
-    /// Any key that is not a letter, Space or Backspace: finishes the phrase
-    /// and passes the character through. Returns the text to commit.
     pub(crate) fn other(&mut self, key: char) -> String {
         let mut text = self.take();
-        // A Khmer mark with no consonant to sit on is dropped, as in Khmer
-        // mode, so that only valid text ever reaches the app.
         let passed = normalize(&key.to_string());
         if is_valid(&passed) {
             text.push_str(&passed);
         }
-        // What follows starts fresh: a new clause, with nothing to space from.
         self.previous.clear();
         self.tail = Tail::Nothing;
         text
     }
 
-    /// The Backspace key: undoes one key. False when nothing is being typed.
     pub(crate) fn backspace(&mut self) -> bool {
         if self.current.is_empty() {
-            // Undo the Space that ended the last token.
             return match self.done.pop() {
                 Some(token) => {
                     self.current = token;
@@ -97,12 +69,10 @@ impl Phrase {
         true
     }
 
-    /// Commits the top suggestion. Returns the text to commit.
     pub(crate) fn take(&mut self) -> String {
         self.select(0).unwrap_or_default()
     }
 
-    /// Commits suggestion number `index`. None when there is no such suggestion.
     pub(crate) fn select(&mut self, index: usize) -> Option<String> {
         let sentence = self.best.get(index)?.clone();
         let text = format!("{}{}", self.lead(&sentence), sentence.text());
@@ -117,12 +87,9 @@ impl Phrase {
         self.done.clear();
         self.current.clear();
         self.best.clear();
-        // Step 5 of the design: everything goes through the normalizer.
         Some(normalize(&text))
     }
 
-    /// The composing text: finished tokens as Khmer, the token being typed as
-    /// the letters typed so far.
     pub(crate) fn preedit(&self) -> String {
         let Some(top) = self.best.first() else {
             return String::new();
@@ -136,18 +103,14 @@ impl Phrase {
         format!("{}{}", self.lead(top), join(&words))
     }
 
-    /// The suggestions for the whole phrase, best first.
     pub(crate) fn candidates(&self) -> Vec<String> {
         self.best.iter().map(Sentence::text).collect()
     }
 
-    /// Forgets everything, including the context from earlier phrases.
     pub(crate) fn clear(&mut self) {
         *self = Phrase::default();
     }
 
-    /// The space, if one is needed, between the last committed word and this
-    /// sentence.
     fn lead(&self, sentence: &Sentence) -> &'static str {
         let starts_latin = sentence.words.first().is_some_and(|word| word.latin);
         match self.tail {
@@ -170,7 +133,6 @@ impl Phrase {
 mod tests {
     use super::*;
 
-    /// Types letters and spaces.
     fn type_keys(phrase: &mut Phrase, keys: &str) -> String {
         let mut committed = String::new();
         for key in keys.chars() {
@@ -224,17 +186,17 @@ mod tests {
     fn backspace_undoes_one_key_including_a_space() {
         let mut phrase = Phrase::default();
         type_keys(&mut phrase, "nh jg ");
-        assert!(phrase.backspace()); // the space
+        assert!(phrase.backspace());
         assert_eq!(phrase.preedit(), "ខ្ញុំjg");
-        assert!(phrase.backspace()); // g
+        assert!(phrase.backspace());
         assert_eq!(phrase.preedit(), "ខ្ញុំj");
-        assert!(phrase.backspace()); // j
+        assert!(phrase.backspace());
         assert_eq!(phrase.preedit(), "ខ្ញុំ");
-        assert!(phrase.backspace()); // the first space
+        assert!(phrase.backspace());
         assert_eq!(phrase.preedit(), "nh");
         assert!(phrase.backspace());
         assert!(phrase.backspace());
-        assert!(!phrase.backspace()); // nothing left
+        assert!(!phrase.backspace());
     }
 
     #[test]
@@ -250,18 +212,15 @@ mod tests {
         let mut phrase = Phrase::default();
         type_keys(&mut phrase, "nh leng facebook");
         assert_eq!(phrase.take(), "ខ្ញុំលេង facebook");
-        // The next phrase follows a Latin word, so it starts with a space.
         type_keys(&mut phrase, "hz");
         assert_eq!(phrase.preedit(), " hz");
         assert_eq!(phrase.take(), " ហើយ");
-        // Khmer after Khmer needs none.
         type_keys(&mut phrase, "nv");
         assert_eq!(phrase.take(), "នៅ");
     }
 
     #[test]
     fn earlier_words_give_context_to_the_next_phrase() {
-        // On its own "nh" is ខ្ញុំ (I); straight after ចង់ (want) it is ញ៉ាំ (eat).
         let mut phrase = Phrase::default();
         type_keys(&mut phrase, "nh");
         assert_eq!(phrase.take(), "ខ្ញុំ");

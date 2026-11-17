@@ -2,8 +2,6 @@
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
     android:settingsActivity="com.newkeyboard.khmer.SetupActivity"
     android:supportsSwitchingToNextInputMethod="true">
-    <!-- isAsciiCapable: the keyboard has an English layout, so it can be used
-         for passwords and web addresses. -->
     <subtype
         android:imeSubtypeLocale="km_KH"
         android:imeSubtypeMode="keyboard"

@@ -1,7 +1,3 @@
-//! Draws the suggestion window into a picture, to look at.
-//!
-//! The picture is saved as `suggestion-window.bmp` in the build folder's `tmp`
-//! (the test prints the full path). Look at it after changing `candidates.rs`.
 #![cfg(windows)]
 
 use std::path::PathBuf;
@@ -9,11 +5,10 @@ use std::path::PathBuf;
 use khmer_core::{Engine, Mode};
 use khmer_tsf::candidates::{create_font, measure, metrics, paint};
 use windows::Win32::Graphics::Gdi::{
-    CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GdiFlush, SelectObject, BITMAPINFO,
-    BITMAPINFOHEADER, DIB_RGB_COLORS,
+    CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GdiFlush, SelectObject, BITMAPINFO, BITMAPINFOHEADER,
+    DIB_RGB_COLORS,
 };
 
-/// The suggestions the keyboard shows for these keys.
 fn suggestions(keys: &str) -> Vec<String> {
     let mut engine = Engine::new();
     engine.set_mode(Mode::Romanized);
@@ -23,8 +18,6 @@ fn suggestions(keys: &str) -> Vec<String> {
     engine.candidates()
 }
 
-/// A .bmp file of `pixels`: rows from the top, four bytes a pixel (blue,
-/// green, red, unused).
 fn bmp(width: i32, height: i32, pixels: &[u8]) -> Vec<u8> {
     let mut file = Vec::with_capacity(54 + pixels.len());
     file.extend(b"BM");
@@ -33,7 +26,6 @@ fn bmp(width: i32, height: i32, pixels: &[u8]) -> Vec<u8> {
     file.extend(54u32.to_le_bytes());
     file.extend(40u32.to_le_bytes());
     file.extend(width.to_le_bytes());
-    // A negative height means the rows run from the top.
     file.extend((-height).to_le_bytes());
     file.extend(1u16.to_le_bytes());
     file.extend(32u16.to_le_bytes());
@@ -46,7 +38,6 @@ fn bmp(width: i32, height: i32, pixels: &[u8]) -> Vec<u8> {
 fn the_suggestion_window_is_drawn() {
     let items = suggestions("nh jg tv");
     assert!(items.len() > 1, "there are suggestions to draw: {items:?}");
-    // 144 is a screen set to 150%, a common laptop setting.
     let dpi = 144;
     let highlighted = 1;
 
@@ -83,9 +74,10 @@ fn the_suggestion_window_is_drawn() {
     std::fs::write(&path, bmp(width, height, &pixels)).expect("the picture is saved");
     println!("saved {}", path.display());
 
-    // Not a blank picture: there is white background, the highlight colour
-    // behind one row, and dark text.
-    let colours: Vec<[u8; 3]> = pixels.chunks_exact(4).map(|pixel| [pixel[2], pixel[1], pixel[0]]).collect();
+    let colours: Vec<[u8; 3]> = pixels
+        .chunks_exact(4)
+        .map(|pixel| [pixel[2], pixel[1], pixel[0]])
+        .collect();
     let count = |wanted: [u8; 3]| colours.iter().filter(|&&colour| colour == wanted).count();
     let all = colours.len();
     assert!(count([0xFF, 0xFF, 0xFF]) > all / 4, "the background is white");

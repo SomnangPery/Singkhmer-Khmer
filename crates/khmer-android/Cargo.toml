@@ -5,7 +5,6 @@ version.workspace = true
 edition.workspace = true
 
 [lib]
-# Android loads this as libkhmer_android.so.
 crate-type = ["cdylib"]
 
 [dependencies]

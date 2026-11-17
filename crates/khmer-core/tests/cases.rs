@@ -1,11 +1,7 @@
-//! Runs every case in tests/data/cases.tsv. See the top of that file for the
-//! format. To add a test, add a line there; no Rust needed.
-
 use khmer_core::{is_valid, normalize, Engine};
 
 const CASES: &str = include_str!("data/cases.tsv");
 
-/// "179F 17D2" -> the string of those code points.
 fn from_hex(hex: &str) -> String {
     hex.split_whitespace()
         .map(|h| {
@@ -20,7 +16,6 @@ fn to_hex(text: &str) -> String {
     codes.join(" ")
 }
 
-/// Types the keys in Khmer mode and returns everything committed to the app.
 fn type_keys(keys: &str) -> String {
     let mut engine = Engine::new();
     let mut app = String::new();
@@ -53,8 +48,6 @@ fn all_cases_pass() {
         let (got, ok) = match kind {
             "normalize" => {
                 let got = normalize(&input);
-                // The result must be what we expect, and normalizing it again
-                // must not change it.
                 let ok = got == from_hex(expected) && normalize(&got) == got;
                 (to_hex(&got), ok)
             }
@@ -64,7 +57,6 @@ fn all_cases_pass() {
             }
             "type" => {
                 let got = type_keys(&input);
-                // Typed text must also always be valid and already normalized.
                 let ok = got == from_hex(expected) && is_valid(&got) && normalize(&got) == got;
                 (to_hex(&got), ok)
             }

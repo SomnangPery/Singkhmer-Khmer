@@ -8,7 +8,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- The screen that explains how to turn the keyboard on. -->
         <activity
             android:name=".SetupActivity"
             android:exported="true"
@@ -19,7 +18,6 @@
             </intent-filter>
         </activity>
 
-        <!-- The keyboard itself. Only the system may bind to it. -->
         <service
             android:name=".KhmerImeService"
             android:exported="true"

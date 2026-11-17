@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Gathers more datasets:
-1. Wikidata Cambodian entities (places, people, culture terms) -> 06_wikidata_cambodia.txt
-2. Google Language Resources Khmer pronunciation lexicon (62k words) -> 07_google_km_pairs.txt
-"""
 
 import json
 import re
@@ -11,7 +6,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-DATASETS_DIR = Path(__file__).resolve().parent
+DATASETS_DIR = Path(__file__).resolve().parent.parent
+PAIRS_DIR = DATASETS_DIR / "pairs"
 DOWNLOADS_DIR = DATASETS_DIR / "downloads"
 
 
@@ -21,7 +17,6 @@ def is_khmer_word(word: str) -> bool:
     )
 
 
-# ── 1. Wikidata Cambodian Entities ──────────────────────────────────
 def fetch_wikidata():
     print("--- 1. Fetching Wikidata Cambodian Entities ---")
     query = """
@@ -33,7 +28,7 @@ def fetch_wikidata():
     """
     url = "https://query.wikidata.org/sparql?format=json&query=" + urllib.parse.quote(query)
     req = urllib.request.Request(url, headers={"User-Agent": "NewkeyboardBot/1.0"})
-    out_path = DATASETS_DIR / "06_wikidata_cambodia.txt"
+    out_path = PAIRS_DIR / "06_wikidata_cambodia.txt"
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             data = json.loads(resp.read())
@@ -61,11 +56,10 @@ def fetch_wikidata():
         return 0
 
 
-# ── 2. Google Language Resources (62k words) ────────────────────────
 def convert_google_km():
     print("\n--- 2. Converting Google Language Resources (62k words) ---")
     in_path = DOWNLOADS_DIR / "google_km_lexicon.tsv"
-    out_path = DATASETS_DIR / "07_google_km_pairs.txt"
+    out_path = PAIRS_DIR / "07_google_km_pairs.txt"
     if not in_path.exists():
         print(f"  Error: {in_path.name} not found")
         return 0

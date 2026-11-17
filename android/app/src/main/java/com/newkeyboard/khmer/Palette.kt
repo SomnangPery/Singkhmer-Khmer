@@ -4,23 +4,18 @@ import android.content.Context
 import android.content.res.Configuration
 import android.util.TypedValue
 
-/** The keyboard's colours. */
 class Palette(
     val background: Int,
     val key: Int,
-    /** Shift, Backspace and the other keys that do not type a character. */
     val specialKey: Int,
     val pressedKey: Int,
     val text: Int,
-    /** The small corner characters, and the name on the space bar. */
     val hint: Int,
-    /** The Enter key, and Shift while it is on. */
     val accent: Int,
     val onAccent: Int,
     val divider: Int,
 ) {
     companion object {
-        /** Light or dark, following the system setting. */
         fun of(context: Context): Palette {
             val night = context.resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
@@ -53,10 +48,8 @@ class Palette(
     }
 }
 
-/** Density-independent pixels to pixels. */
 fun Context.dp(value: Float): Float =
     TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, resources.displayMetrics)
 
-/** Scaled pixels (text sizes) to pixels. */
 fun Context.sp(value: Float): Float =
     TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, value, resources.displayMetrics)

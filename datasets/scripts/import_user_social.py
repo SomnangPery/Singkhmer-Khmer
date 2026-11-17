@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""
-import_user_social.py: Ingests user-exported Facebook Messenger, Telegram, and TikTok data.
-
-Supported formats:
-1. Facebook Messenger JSON export (from "Download Your Information" -> Messages -> JSON):
-   Automatically fixes Facebook's latin1-mojibake encoding on UTF-8 strings.
-2. Telegram Desktop chat export (from "Export Chat History" -> JSON format -> result.json).
-3. TikTok comment or caption export / text dumps (JSON or newline-separated text).
-
-Usage:
-  python datasets/import_user_social.py --fb path/to/message_1.json
-  python datasets/import_user_social.py --tg path/to/result.json
-  python datasets/import_user_social.py --tiktok path/to/comments.txt
-  python datasets/import_user_social.py --auto
-"""
 
 import argparse
 import glob
@@ -24,16 +9,16 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-DOWNLOADS_DIR = BASE_DIR / "downloads"
-OUTPUT_PAIRS = BASE_DIR / "21_user_social_pairs.txt"
+DATASETS_DIR = Path(__file__).resolve().parent.parent
+PAIRS_DIR = DATASETS_DIR / "pairs"
+DOWNLOADS_DIR = DATASETS_DIR / "downloads"
+OUTPUT_PAIRS = PAIRS_DIR / "21_user_social_pairs.txt"
 
 KHMER_CHAR_RE = re.compile(r"[\u1780-\u17FF]")
 LATIN_TOKEN_RE = re.compile(r"^[a-zA-Z0-9_\'-]+$")
 
 
 def fix_fb_encoding(text: str) -> str:
-    """Facebook exports encode UTF-8 bytes as latin1 escape sequences."""
     try:
         return text.encode("latin1").decode("utf-8")
     except Exception:
@@ -52,7 +37,6 @@ def is_khmer_sentence(text: str) -> bool:
 
 
 def is_singkhmer_sentence(text: str) -> bool:
-    # Contains mostly Latin characters, spaces, and no extensive Khmer script
     latin_count = len(re.findall(r"[a-zA-Z]", text))
     khmer_count = len(KHMER_CHAR_RE.findall(text))
     return latin_count >= 4 and khmer_count == 0
@@ -173,7 +157,6 @@ def main():
                 all_messages.extend(parse_text_or_json(Path(p)))
 
     if args.auto or (not args.fb and not args.tg and not args.tiktok):
-        # Scan datasets/downloads/ for any potential export files
         for p in DOWNLOADS_DIR.glob("**/*.json"):
             name = p.name.lower()
             if "message" in name:

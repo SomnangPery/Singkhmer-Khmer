@@ -1,15 +1,5 @@
-//! Which key does what.
-//!
-//! Keys are told apart by their position on the keyboard (the scan code), not
-//! by the letter the active Windows layout gives them, so both modes type the
-//! same on every machine.
-//!
-//! This file knows nothing about Windows text services: it only turns a key
-//! press into a [`KeyAction`] for `service.rs` to carry out.
-
 use khmer_core::Mode;
 
-// Virtual key codes (winuser.h).
 pub const VK_BACK: u16 = 0x08;
 pub const VK_TAB: u16 = 0x09;
 pub const VK_RETURN: u16 = 0x0D;
@@ -33,44 +23,30 @@ const VK_SCROLL: u16 = 0x91;
 const VK_LSHIFT: u16 = 0xA0;
 const VK_RMENU: u16 = 0xA5;
 
-/// Which of the keys that change other keys are held down.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Modifiers {
     pub shift: bool,
     pub ctrl: bool,
     pub alt: bool,
-    /// Caps Lock is on.
     pub caps: bool,
 }
 
-/// What the keyboard does with a key press.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum KeyAction {
-    /// Not ours: the app gets the key. With `forget`, the key changes the text
-    /// or the cursor, so the engine's memory of earlier words is dropped.
     Pass { forget: bool },
-    /// These characters go to the engine, one after another.
     Text(&'static str),
-    /// Space while a romanized phrase is being typed.
     Space,
     Backspace,
-    /// Finish the phrase with the highlighted suggestion.
     Commit,
-    /// Throw the phrase away.
     Cancel,
-    /// Highlight the next suggestion.
     Next,
     Previous,
-    /// Swallowed: the key would move the cursor inside the phrase being typed.
     Ignore,
 }
 
-/// One key of the main block: its scan code and what it types.
 struct KeyRow {
     scan: u8,
-    /// US layout: plain and with Shift.
     latin: [&'static str; 2],
-    /// Khmer (NiDA) layout: plain, with Shift, and with AltGr ("" for nothing).
     khmer: [&'static str; 3],
 }
 
@@ -78,10 +54,6 @@ const fn key(scan: u8, latin: [&'static str; 2], khmer: [&'static str; 3]) -> Ke
     KeyRow { scan, latin, khmer }
 }
 
-/// The main block of the keyboard, row by row from the top.
-///
-/// The Khmer columns are the NiDA standard layout, the one Windows ships as
-/// its Khmer keyboard. A few keys type two characters (ុំ is ុ then ំ).
 #[rustfmt::skip]
 const KEYS: &[KeyRow] = &[
     key(0x29, ["`", "~"], ["«", "»", "\u{200D}"]),
@@ -136,9 +108,9 @@ const KEYS: &[KeyRow] = &[
     key(0x35, ["/", "?"], ["\u{17CA}", "?", "/"]),
 ];
 
-/// The characters of the number pad, by virtual key (VK_NUMPAD0 to VK_DIVIDE).
-const NUMPAD: [&str; 16] =
-    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "+", "", "-", ".", "/"];
+const NUMPAD: [&str; 16] = [
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "+", "", "-", ".", "/",
+];
 
 fn main_key(scan: u8) -> Option<&'static KeyRow> {
     KEYS.iter().find(|row| row.scan == scan)
@@ -148,20 +120,14 @@ fn is_letter(text: &str) -> bool {
     text.len() == 1 && text.as_bytes()[0].is_ascii_alphabetic()
 }
 
-/// Decides what a key press does.
-///
-/// `scan` is the key's position (bits 16-23 of the key message's `lParam`),
-/// `vk` its virtual key code. `composing` says whether text is being typed
-/// and not yet committed.
 pub fn action(mode: Mode, composing: bool, vk: u16, scan: u8, held: Modifiers) -> KeyAction {
-    // Shift, Ctrl and the like do nothing by themselves.
-    if matches!(vk, VK_SHIFT | VK_CONTROL | VK_MENU | VK_CAPITAL | VK_LWIN | VK_RWIN | VK_NUMLOCK | VK_SCROLL)
-        || (VK_LSHIFT..=VK_RMENU).contains(&vk)
+    if matches!(
+        vk,
+        VK_SHIFT | VK_CONTROL | VK_MENU | VK_CAPITAL | VK_LWIN | VK_RWIN | VK_NUMLOCK | VK_SCROLL
+    ) || (VK_LSHIFT..=VK_RMENU).contains(&vk)
     {
         return KeyAction::Pass { forget: false };
     }
-    // AltGr arrives as Ctrl and Alt together. Ctrl or Alt alone is a
-    // shortcut (Ctrl+C), which belongs to the app.
     let altgr = held.ctrl && held.alt;
     if (held.ctrl || held.alt) && !(altgr && mode == Mode::Khmer) {
         return KeyAction::Pass { forget: true };
@@ -176,18 +142,32 @@ pub fn action(mode: Mode, composing: bool, vk: u16, scan: u8, held: Modifiers) -
 fn romanized(composing: bool, vk: u16, scan: u8, numpad: bool, held: Modifiers) -> KeyAction {
     let pass = KeyAction::Pass { forget: true };
     match vk {
-        // With no phrase being typed, Space is a plain space. It is still
-        // ours: left to the app, it would be typed by the Windows layout under
-        // this keyboard, the Khmer one, whose Space is the invisible word break.
-        VK_SPACE => return if composing { KeyAction::Space } else { KeyAction::Text(" ") },
+        VK_SPACE => {
+            return if composing {
+                KeyAction::Space
+            } else {
+                KeyAction::Text(" ")
+            }
+        }
         VK_BACK => return if composing { KeyAction::Backspace } else { pass },
         VK_RETURN => return if composing { KeyAction::Commit } else { pass },
-        VK_ESCAPE => return if composing { KeyAction::Cancel } else { KeyAction::Pass { forget: false } },
-        VK_TAB if composing => return if held.shift { KeyAction::Previous } else { KeyAction::Next },
+        VK_ESCAPE => {
+            return if composing {
+                KeyAction::Cancel
+            } else {
+                KeyAction::Pass { forget: false }
+            }
+        }
+        VK_TAB if composing => {
+            return if held.shift {
+                KeyAction::Previous
+            } else {
+                KeyAction::Next
+            }
+        }
         VK_TAB => return pass,
         VK_UP if composing => return KeyAction::Previous,
         VK_DOWN if composing => return KeyAction::Next,
-        // Page Up to Down arrow, Insert, Delete: they move the cursor.
         VK_PRIOR..=VK_DOWN | VK_INSERT | VK_DELETE => {
             return if composing { KeyAction::Ignore } else { pass };
         }
@@ -197,32 +177,20 @@ fn romanized(composing: bool, vk: u16, scan: u8, numpad: bool, held: Modifiers) 
         NUMPAD[usize::from(vk - VK_NUMPAD0)]
     } else {
         match main_key(scan) {
-            Some(row) if is_letter(row.latin[0]) => {
-                // Caps Lock turns Shift around, for letters only.
-                row.latin[usize::from(held.shift != held.caps)]
-            }
+            Some(row) if is_letter(row.latin[0]) => row.latin[usize::from(held.shift != held.caps)],
             Some(row) => row.latin[usize::from(held.shift)],
             None => "",
         }
     };
     if text.is_empty() {
-        // A function key, or some other key that types nothing.
         KeyAction::Pass { forget: false }
     } else {
-        // A letter starts or continues a phrase. Anything else finishes the
-        // phrase being typed, if there is one, and is written after it.
-        //
-        // A digit or a punctuation mark is ours even with no phrase: left to
-        // the app, it would be typed by the Windows layout under this
-        // keyboard, which is the Khmer one (១ for 1, ។ for a full stop).
         KeyAction::Text(text)
     }
 }
 
 fn khmer(composing: bool, vk: u16, scan: u8, numpad: bool, held: Modifiers, altgr: bool) -> KeyAction {
     match vk {
-        // As on the standard layout: Space is the invisible word break that
-        // lets Khmer text wrap, and Shift+Space is a real space.
         VK_SPACE => return KeyAction::Text(if held.shift { " " } else { "\u{200B}" }),
         VK_BACK if composing => return KeyAction::Backspace,
         _ => {}
@@ -235,8 +203,6 @@ fn khmer(composing: bool, vk: u16, scan: u8, numpad: bool, held: Modifiers, altg
             }
         }
     }
-    // Enter, the arrows, the number pad: the app's, once the syllable being
-    // typed has been finished.
     KeyAction::Pass { forget: true }
 }
 
@@ -244,7 +210,12 @@ fn khmer(composing: bool, vk: u16, scan: u8, numpad: bool, held: Modifiers, altg
 mod tests {
     use super::*;
 
-    const NONE: Modifiers = Modifiers { shift: false, ctrl: false, alt: false, caps: false };
+    const NONE: Modifiers = Modifiers {
+        shift: false,
+        ctrl: false,
+        alt: false,
+        caps: false,
+    };
     const SHIFT: Modifiers = Modifiers { shift: true, ..NONE };
     const SCAN_A: u8 = 0x1E;
     const SCAN_1: u8 = 0x02;
@@ -274,7 +245,10 @@ mod tests {
     #[test]
     fn letters_start_a_romanized_phrase() {
         assert_eq!(action(Mode::Romanized, false, 0x41, SCAN_A, NONE), KeyAction::Text("a"));
-        assert_eq!(action(Mode::Romanized, false, 0x41, SCAN_A, SHIFT), KeyAction::Text("A"));
+        assert_eq!(
+            action(Mode::Romanized, false, 0x41, SCAN_A, SHIFT),
+            KeyAction::Text("A")
+        );
         let caps = Modifiers { caps: true, ..NONE };
         assert_eq!(action(Mode::Romanized, false, 0x41, SCAN_A, caps), KeyAction::Text("A"));
         let both = Modifiers { caps: true, ..SHIFT };
@@ -284,18 +258,32 @@ mod tests {
     #[test]
     fn digits_and_punctuation_are_latin_with_or_without_a_phrase() {
         for composing in [false, true] {
-            assert_eq!(action(Mode::Romanized, composing, 0x31, SCAN_1, NONE), KeyAction::Text("1"));
-            assert_eq!(action(Mode::Romanized, composing, 0x31, SCAN_1, SHIFT), KeyAction::Text("!"));
-            assert_eq!(action(Mode::Romanized, composing, 0xBC, SCAN_COMMA, NONE), KeyAction::Text(","));
-            // Caps Lock does not shift a digit.
+            assert_eq!(
+                action(Mode::Romanized, composing, 0x31, SCAN_1, NONE),
+                KeyAction::Text("1")
+            );
+            assert_eq!(
+                action(Mode::Romanized, composing, 0x31, SCAN_1, SHIFT),
+                KeyAction::Text("!")
+            );
+            assert_eq!(
+                action(Mode::Romanized, composing, 0xBC, SCAN_COMMA, NONE),
+                KeyAction::Text(",")
+            );
             let caps = Modifiers { caps: true, ..NONE };
-            assert_eq!(action(Mode::Romanized, composing, 0x31, SCAN_1, caps), KeyAction::Text("1"));
+            assert_eq!(
+                action(Mode::Romanized, composing, 0x31, SCAN_1, caps),
+                KeyAction::Text("1")
+            );
         }
     }
 
     #[test]
     fn romanized_space_is_a_real_space_when_no_phrase_is_being_typed() {
-        assert_eq!(action(Mode::Romanized, false, VK_SPACE, 0x39, NONE), KeyAction::Text(" "));
+        assert_eq!(
+            action(Mode::Romanized, false, VK_SPACE, 0x39, NONE),
+            KeyAction::Text(" ")
+        );
         assert_eq!(action(Mode::Romanized, true, VK_SPACE, 0x39, NONE), KeyAction::Space);
     }
 
@@ -310,7 +298,10 @@ mod tests {
             (VK_DELETE, KeyAction::Ignore),
         ] {
             assert_eq!(action(Mode::Romanized, true, vk, 0, NONE), during);
-            assert_eq!(action(Mode::Romanized, false, vk, 0, NONE), KeyAction::Pass { forget: true });
+            assert_eq!(
+                action(Mode::Romanized, false, vk, 0, NONE),
+                KeyAction::Pass { forget: true }
+            );
         }
         assert_eq!(action(Mode::Romanized, true, VK_ESCAPE, 0, NONE), KeyAction::Cancel);
         assert_eq!(action(Mode::Romanized, true, VK_TAB, 0, SHIFT), KeyAction::Previous);
@@ -324,41 +315,72 @@ mod tests {
             assert_eq!(action(mode, true, 0x41, SCAN_A, ctrl), KeyAction::Pass { forget: true });
             assert_eq!(action(mode, false, 0x41, SCAN_A, alt), KeyAction::Pass { forget: true });
         }
-        // Shift by itself is not a key press worth forgetting anything for.
-        assert_eq!(action(Mode::Romanized, true, VK_SHIFT, 0x2A, SHIFT), KeyAction::Pass { forget: false });
+        assert_eq!(
+            action(Mode::Romanized, true, VK_SHIFT, 0x2A, SHIFT),
+            KeyAction::Pass { forget: false }
+        );
     }
 
     #[test]
     fn khmer_layout_follows_the_key_position() {
-        assert_eq!(action(Mode::Khmer, false, 0x41, SCAN_A, NONE), KeyAction::Text("\u{17B6}"));
-        assert_eq!(action(Mode::Khmer, false, 0x41, SCAN_A, SHIFT), KeyAction::Text("\u{17B6}\u{17C6}"));
+        assert_eq!(
+            action(Mode::Khmer, false, 0x41, SCAN_A, NONE),
+            KeyAction::Text("\u{17B6}")
+        );
+        assert_eq!(
+            action(Mode::Khmer, false, 0x41, SCAN_A, SHIFT),
+            KeyAction::Text("\u{17B6}\u{17C6}")
+        );
         assert_eq!(action(Mode::Khmer, false, 0x31, SCAN_1, NONE), KeyAction::Text("១"));
-        assert_eq!(action(Mode::Khmer, false, 0xBC, SCAN_COMMA, NONE), KeyAction::Text("\u{17BB}\u{17C6}"));
-        let altgr = Modifiers { ctrl: true, alt: true, ..NONE };
+        assert_eq!(
+            action(Mode::Khmer, false, 0xBC, SCAN_COMMA, NONE),
+            KeyAction::Text("\u{17BB}\u{17C6}")
+        );
+        let altgr = Modifiers {
+            ctrl: true,
+            alt: true,
+            ..NONE
+        };
         assert_eq!(action(Mode::Khmer, false, 0x45, 0x12, altgr), KeyAction::Text("ឯ"));
-        // AltGr on a key with nothing there is left to the app.
-        assert_eq!(action(Mode::Khmer, false, 0x41, SCAN_A, altgr), KeyAction::Pass { forget: true });
+        assert_eq!(
+            action(Mode::Khmer, false, 0x41, SCAN_A, altgr),
+            KeyAction::Pass { forget: true }
+        );
     }
 
     #[test]
     fn khmer_space_is_the_invisible_word_break() {
-        assert_eq!(action(Mode::Khmer, false, VK_SPACE, 0x39, NONE), KeyAction::Text("\u{200B}"));
+        assert_eq!(
+            action(Mode::Khmer, false, VK_SPACE, 0x39, NONE),
+            KeyAction::Text("\u{200B}")
+        );
         assert_eq!(action(Mode::Khmer, false, VK_SPACE, 0x39, SHIFT), KeyAction::Text(" "));
     }
 
     #[test]
     fn khmer_backspace_and_enter() {
         assert_eq!(action(Mode::Khmer, true, VK_BACK, 0x0E, NONE), KeyAction::Backspace);
-        assert_eq!(action(Mode::Khmer, false, VK_BACK, 0x0E, NONE), KeyAction::Pass { forget: true });
-        assert_eq!(action(Mode::Khmer, true, VK_RETURN, 0x1C, NONE), KeyAction::Pass { forget: true });
+        assert_eq!(
+            action(Mode::Khmer, false, VK_BACK, 0x0E, NONE),
+            KeyAction::Pass { forget: true }
+        );
+        assert_eq!(
+            action(Mode::Khmer, true, VK_RETURN, 0x1C, NONE),
+            KeyAction::Pass { forget: true }
+        );
     }
 
     #[test]
     fn the_number_pad_types_digits() {
-        // Number pad 5, then number pad "/", which shares a scan code with "/".
         assert_eq!(action(Mode::Romanized, false, 0x65, 0x4C, NONE), KeyAction::Text("5"));
         assert_eq!(action(Mode::Romanized, true, 0x65, 0x4C, NONE), KeyAction::Text("5"));
-        assert_eq!(action(Mode::Romanized, true, VK_DIVIDE, 0x35, NONE), KeyAction::Text("/"));
-        assert_eq!(action(Mode::Khmer, false, VK_DIVIDE, 0x35, NONE), KeyAction::Pass { forget: true });
+        assert_eq!(
+            action(Mode::Romanized, true, VK_DIVIDE, 0x35, NONE),
+            KeyAction::Text("/")
+        );
+        assert_eq!(
+            action(Mode::Khmer, false, VK_DIVIDE, 0x35, NONE),
+            KeyAction::Pass { forget: true }
+        );
     }
 }

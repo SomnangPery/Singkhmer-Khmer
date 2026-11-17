@@ -1,12 +1,3 @@
-//! Types through the text service into a stand-in text field.
-//!
-//! Nothing is installed for this. The test starts the real Windows Text
-//! Services Framework on its own thread, gives it a text field that lives only
-//! in memory (`Field`, below), and hands key presses to the text service the
-//! way Windows would. What ends up in the field is what an app would hold.
-//!
-//! What this does not cover: how real apps (Notepad, Word, a browser) behave,
-//! and where the suggestion window appears on screen.
 #![cfg(windows)]
 #![allow(non_snake_case)]
 
@@ -26,44 +17,31 @@ use windows::Win32::System::Com::{
     FORMATETC,
 };
 use windows::Win32::UI::TextServices::{
-    ITextStoreACP, ITextStoreACPSink, ITextStoreACP_Impl, ITfCompositionView, ITfContext, ITfContextComposition,
-    ITfContextOwnerCompositionServices, ITfContextOwnerCompositionSink, ITfContextOwnerCompositionSink_Impl,
-    ITfDisplayAttributeProvider, ITfDocumentMgr, ITfKeyEventSink, ITfRange, ITfRangeACP, ITfTextInputProcessorEx,
-    ITfThreadMgr,
-    ITfThreadMgrEventSink, CLSID_TF_ThreadMgr, TEXT_STORE_LOCK_FLAGS, TF_DISPLAYATTRIBUTE, TF_LS_DOT, TF_POPF_ALL,
-    TF_TMAE_SECUREMODE, TS_AE_END,
-    TS_AE_NONE, TS_ATTRVAL, TS_DEFAULT_SELECTION, TS_E_NOLOCK, TS_E_SYNCHRONOUS, TS_IAS_NOQUERY, TS_IAS_QUERYONLY,
-    TS_LF_SYNC, TS_RT_PLAIN, TS_RUNINFO, TS_SD_READONLY, TS_SELECTIONSTYLE, TS_SELECTION_ACP, TS_STATUS,
-    TS_S_ASYNC, TS_TEXTCHANGE,
+    CLSID_TF_ThreadMgr, ITextStoreACP, ITextStoreACPSink, ITextStoreACP_Impl, ITfCompositionView, ITfContext,
+    ITfContextComposition, ITfContextOwnerCompositionServices, ITfContextOwnerCompositionSink,
+    ITfContextOwnerCompositionSink_Impl, ITfDisplayAttributeProvider, ITfDocumentMgr, ITfKeyEventSink, ITfRange,
+    ITfRangeACP, ITfTextInputProcessorEx, ITfThreadMgr, ITfThreadMgrEventSink, TEXT_STORE_LOCK_FLAGS,
+    TF_DISPLAYATTRIBUTE, TF_LS_DOT, TF_POPF_ALL, TF_TMAE_SECUREMODE, TS_AE_END, TS_AE_NONE, TS_ATTRVAL,
+    TS_DEFAULT_SELECTION, TS_E_NOLOCK, TS_E_SYNCHRONOUS, TS_IAS_NOQUERY, TS_IAS_QUERYONLY, TS_LF_SYNC, TS_RT_PLAIN,
+    TS_RUNINFO, TS_SD_READONLY, TS_SELECTIONSTYLE, TS_SELECTION_ACP, TS_STATUS, TS_S_ASYNC, TS_TEXTCHANGE,
 };
 
-// ---- the stand-in text field ----
-
-/// What a lock lets its holder do (TS_LF_READ and TS_LF_READWRITE).
 const MAY_READ: u32 = 2;
 const MAY_WRITE: u32 = 4;
 
 #[derive(Default)]
 struct Content {
-    /// The text, in the UTF-16 units Windows counts positions in.
     text: Vec<u16>,
-    /// The selection. The cursor is a selection with nothing in it.
     start: i32,
     end: i32,
     read_only: bool,
-    /// How many pieces of text are marked as still being typed.
     compositions: usize,
 
-    /// Windows' side of the field: it is told when it may read and write.
     sink: Option<ITextStoreACPSink>,
-    /// The permission handed out at the moment. 0 for none.
     lock: u32,
-    /// A permission asked for while another was out.
     waiting: Option<u32>,
 }
 
-/// A text field that is only a string and a cursor. It answers the questions
-/// Windows asks a text field (`ITextStoreACP`), and nothing else.
 #[implement(ITextStoreACP, ITfContextOwnerCompositionSink)]
 #[derive(Default)]
 struct Field {
@@ -79,8 +57,6 @@ impl Field {
         }
     }
 
-    /// Puts `new` in place of the text from `start` to `end`, and the cursor
-    /// after it.
     fn replace(&self, start: i32, end: i32, new: &[u16]) -> Result<TS_TEXTCHANGE> {
         let mut content = self.content.borrow_mut();
         let length = content.text.len() as i32;
@@ -91,7 +67,11 @@ impl Field {
         let new_end = start + new.len() as i32;
         content.start = new_end;
         content.end = new_end;
-        Ok(TS_TEXTCHANGE { acpStart: start, acpOldEnd: end, acpNewEnd: new_end })
+        Ok(TS_TEXTCHANGE {
+            acpStart: start,
+            acpOldEnd: end,
+            acpNewEnd: new_end,
+        })
     }
 }
 
@@ -108,7 +88,9 @@ impl ITextStoreACP_Impl for Field_Impl {
         if iid.is_null() || unsafe { *iid } != ITextStoreACPSink::IID {
             return Err(Error::from(E_INVALIDARG));
         }
-        let sink = sink.ok_or_else(|| Error::from(E_INVALIDARG))?.cast::<ITextStoreACPSink>()?;
+        let sink = sink
+            .ok_or_else(|| Error::from(E_INVALIDARG))?
+            .cast::<ITextStoreACPSink>()?;
         self.content.borrow_mut().sink = Some(sink);
         Ok(())
     }
@@ -118,9 +100,6 @@ impl ITextStoreACP_Impl for Field_Impl {
         Ok(())
     }
 
-    /// Windows asks to read or change the text. This field is never busy, so
-    /// the answer is always "now": Windows is called back at once, and reads
-    /// and writes from inside that call.
     fn RequestLock(&self, flags: u32) -> Result<HRESULT> {
         let wanted = flags & !TS_LF_SYNC;
         let sink = {
@@ -151,10 +130,20 @@ impl ITextStoreACP_Impl for Field_Impl {
 
     fn GetStatus(&self) -> Result<TS_STATUS> {
         let read_only = self.content.borrow().read_only;
-        Ok(TS_STATUS { dwDynamicFlags: if read_only { TS_SD_READONLY } else { 0 }, dwStaticFlags: 0 })
+        Ok(TS_STATUS {
+            dwDynamicFlags: if read_only { TS_SD_READONLY } else { 0 },
+            dwStaticFlags: 0,
+        })
     }
 
-    fn QueryInsert(&self, start: i32, end: i32, _count: u32, result_start: *mut i32, result_end: *mut i32) -> Result<()> {
+    fn QueryInsert(
+        &self,
+        start: i32,
+        end: i32,
+        _count: u32,
+        result_start: *mut i32,
+        result_end: *mut i32,
+    ) -> Result<()> {
         unsafe {
             *result_start = start;
             *result_end = end;
@@ -173,7 +162,11 @@ impl ITextStoreACP_Impl for Field_Impl {
                 acpStart: content.start,
                 acpEnd: content.end,
                 style: TS_SELECTIONSTYLE {
-                    ase: if content.start == content.end { TS_AE_NONE } else { TS_AE_END },
+                    ase: if content.start == content.end {
+                        TS_AE_NONE
+                    } else {
+                        TS_AE_END
+                    },
                     fInterimChar: FALSE,
                 },
             };
@@ -229,10 +222,12 @@ impl ITextStoreACP_Impl for Field_Impl {
             if !plain_count.is_null() {
                 *plain_count = if copy { count } else { 0 };
             }
-            // All of the text is plain text: one run.
             let one_run = !runs.is_null() && runs_room > 0 && count > 0;
             if one_run {
-                *runs = TS_RUNINFO { uCount: count, r#type: TS_RT_PLAIN };
+                *runs = TS_RUNINFO {
+                    uCount: count,
+                    r#type: TS_RT_PLAIN,
+                };
             }
             if !runs_count.is_null() {
                 *runs_count = u32::from(one_run);
@@ -261,7 +256,13 @@ impl ITextStoreACP_Impl for Field_Impl {
         Ok(FALSE)
     }
 
-    fn InsertEmbedded(&self, _flags: u32, _start: i32, _end: i32, _object: Option<&IDataObject>) -> Result<TS_TEXTCHANGE> {
+    fn InsertEmbedded(
+        &self,
+        _flags: u32,
+        _start: i32,
+        _end: i32,
+        _object: Option<&IDataObject>,
+    ) -> Result<TS_TEXTCHANGE> {
         Err(Error::from(E_NOTIMPL))
     }
 
@@ -279,7 +280,6 @@ impl ITextStoreACP_Impl for Field_Impl {
             (content.start, content.end)
         };
         if flags & TS_IAS_QUERYONLY != 0 {
-            // Only a question: where would the text go?
             self.need(MAY_READ)?;
             unsafe {
                 if !result_start.is_null() {
@@ -319,9 +319,6 @@ impl ITextStoreACP_Impl for Field_Impl {
     ) -> Result<()> {
         Err(Error::from(E_NOTIMPL))
     }
-
-    // The field has no formatting, so every question about it has the same
-    // answer: none.
 
     fn RequestSupportedAttrs(&self, _flags: u32, _count: u32, _attributes: *const GUID) -> Result<()> {
         Ok(())
@@ -386,13 +383,16 @@ impl ITextStoreACP_Impl for Field_Impl {
         Err(Error::from(E_NOTIMPL))
     }
 
-    /// Where on screen a piece of text is. The field is not on any screen, so
-    /// this is made up.
     fn GetTextExt(&self, _view: u32, start: i32, end: i32, place: *mut RECT, clipped: *mut BOOL) -> Result<()> {
         self.need(MAY_READ)?;
         unsafe {
             if !place.is_null() {
-                *place = RECT { left: 100 + 10 * start, top: 100, right: 100 + 10 * end.max(start + 1), bottom: 120 };
+                *place = RECT {
+                    left: 100 + 10 * start,
+                    top: 100,
+                    right: 100 + 10 * end.max(start + 1),
+                    bottom: 120,
+                };
             }
             if !clipped.is_null() {
                 *clipped = FALSE;
@@ -402,7 +402,12 @@ impl ITextStoreACP_Impl for Field_Impl {
     }
 
     fn GetScreenExt(&self, _view: u32) -> Result<RECT> {
-        Ok(RECT { left: 0, top: 0, right: 800, bottom: 600 })
+        Ok(RECT {
+            left: 0,
+            top: 0,
+            right: 800,
+            bottom: 600,
+        })
     }
 
     fn GetWnd(&self, _view: u32) -> Result<HWND> {
@@ -410,8 +415,6 @@ impl ITextStoreACP_Impl for Field_Impl {
     }
 }
 
-/// Windows tells the field when a keyboard starts and stops marking text as
-/// "still being typed". The field only counts.
 impl ITfContextOwnerCompositionSink_Impl for Field_Impl {
     fn OnStartComposition(&self, _composition: Option<&ITfCompositionView>) -> Result<BOOL> {
         self.content.borrow_mut().compositions += 1;
@@ -429,9 +432,6 @@ impl ITfContextOwnerCompositionSink_Impl for Field_Impl {
     }
 }
 
-// ---- the desk: one text field with the keyboard at it ----
-
-/// The Text Services Framework on this thread, with one text field in focus.
 struct Windows {
     thread_mgr: ITfThreadMgr,
     client_id: u32,
@@ -441,7 +441,6 @@ struct Windows {
 }
 
 impl Windows {
-    /// A field holding `text`, with the cursor before character number `cursor`.
     fn with_field(text: &str, cursor: usize) -> Windows {
         let field = ComObject::new(Field::default());
         {
@@ -451,7 +450,6 @@ impl Windows {
             content.end = cursor as i32;
         }
         unsafe {
-            // Each test runs on a thread of its own, and COM is per thread.
             let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
             let thread_mgr: ITfThreadMgr =
                 CoCreateInstance(&CLSID_TF_ThreadMgr, None, CLSCTX_INPROC_SERVER).expect("the text framework starts");
@@ -460,11 +458,19 @@ impl Windows {
             let store: ITextStoreACP = field.to_interface();
             let mut context = None;
             let mut cookie = 0;
-            document.CreateContext(client_id, 0, &store, &mut context, &mut cookie).expect("a context for the field");
+            document
+                .CreateContext(client_id, 0, &store, &mut context, &mut cookie)
+                .expect("a context for the field");
             let context = context.expect("a context for the field");
             document.Push(&context).expect("the field is shown");
             thread_mgr.SetFocus(&document).expect("the field takes the focus");
-            Windows { thread_mgr, client_id, document, context, field }
+            Windows {
+                thread_mgr,
+                client_id,
+                document,
+                context,
+                field,
+            }
         }
     }
 
@@ -472,14 +478,12 @@ impl Windows {
         String::from_utf16(&self.field.content.borrow().text).expect("the field holds valid text")
     }
 
-    /// Where the cursor is, counted in UTF-16 units.
     fn cursor(&self) -> usize {
         let content = self.field.content.borrow();
         assert_eq!(content.start, content.end, "nothing should be selected");
         content.end as usize
     }
 
-    /// The text marked as still being typed, if there is some.
     fn composing(&self) -> Option<String> {
         unsafe {
             let compositions: ITfContextComposition = self.context.cast().expect("compositions");
@@ -488,9 +492,15 @@ impl Windows {
             let mut fetched = 0;
             let _ = list.Next(&mut views, &mut fetched);
             let view = views[0].take()?;
-            let range: ITfRangeACP = view.GetRange().expect("the composition's place").cast().expect("as positions");
+            let range: ITfRangeACP = view
+                .GetRange()
+                .expect("the composition's place")
+                .cast()
+                .expect("as positions");
             let (mut start, mut length) = (0, 0);
-            range.GetExtent(&mut start, &mut length).expect("the composition's extent");
+            range
+                .GetExtent(&mut start, &mut length)
+                .expect("the composition's extent");
             let content = self.field.content.borrow();
             assert_eq!(content.compositions, 1, "the field was told about the composition");
             Some(String::from_utf16(&content.text[start as usize..(start + length) as usize]).expect("valid text"))
@@ -499,7 +509,11 @@ impl Windows {
 
     fn assert_nothing_is_composing(&self) {
         assert_eq!(self.composing(), None);
-        assert_eq!(self.field.content.borrow().compositions, 0, "the field was told the composition ended");
+        assert_eq!(
+            self.field.content.borrow().compositions,
+            0,
+            "the field was told the composition ended"
+        );
     }
 }
 
@@ -512,9 +526,7 @@ impl Drop for Windows {
     }
 }
 
-/// A text field with the keyboard at it, in one of its two modes.
 struct Desk {
-    // Dropped first: the service lets go of the field before Windows closes it.
     service: ComObject<TextService>,
     keys: ITfKeyEventSink,
     windows: Windows,
@@ -533,19 +545,23 @@ impl Desk {
         Desk { service, keys, windows }
     }
 
-    /// Presses one key, the way Windows does: first it asks whether the
-    /// keyboard wants the key, and only then hands it over. Returns false
-    /// when the key is left to the app.
     fn press(&self, vk: u16, scan: u8) -> bool {
         let wparam = WPARAM(usize::from(vk));
         let lparam = LPARAM(isize::from(scan) << 16 | 1);
         unsafe {
-            let wanted = self.keys.OnTestKeyDown(&self.windows.context, wparam, lparam).expect("an answer");
-            wanted.as_bool() && self.keys.OnKeyDown(&self.windows.context, wparam, lparam).expect("an answer").as_bool()
+            let wanted = self
+                .keys
+                .OnTestKeyDown(&self.windows.context, wparam, lparam)
+                .expect("an answer");
+            wanted.as_bool()
+                && self
+                    .keys
+                    .OnKeyDown(&self.windows.context, wparam, lparam)
+                    .expect("an answer")
+                    .as_bool()
         }
     }
 
-    /// Presses the keys that carry these characters on a US keyboard.
     fn type_keys(&self, keys: &str) {
         for character in keys.chars() {
             let (vk, scan) = us_key(character);
@@ -553,9 +569,11 @@ impl Desk {
         }
     }
 
-    /// The same, with Shift held down.
     fn type_shifted(&self, keys: &str) {
-        self.service.set_test_modifiers(Modifiers { shift: true, ..Modifiers::default() });
+        self.service.set_test_modifiers(Modifiers {
+            shift: true,
+            ..Modifiers::default()
+        });
         self.type_keys(keys);
         self.service.set_test_modifiers(Modifiers::default());
     }
@@ -569,10 +587,13 @@ impl Desk {
     }
 }
 
-/// The virtual key code and the scan code of the key that carries `character`
-/// on a US keyboard.
 fn us_key(character: char) -> (u16, u8) {
-    const ROWS: [(&str, u8); 4] = [("1234567890-=", 0x02), ("qwertyuiop[]", 0x10), ("asdfghjkl;'", 0x1E), ("zxcvbnm,./", 0x2C)];
+    const ROWS: [(&str, u8); 4] = [
+        ("1234567890-=", 0x02),
+        ("qwertyuiop[]", 0x10),
+        ("asdfghjkl;'", 0x1E),
+        ("zxcvbnm,./", 0x2C),
+    ];
     if character == ' ' {
         return (VK_SPACE, 0x39);
     }
@@ -581,8 +602,6 @@ fn us_key(character: char) -> (u16, u8) {
             let vk = match character {
                 'a'..='z' => character.to_ascii_uppercase() as u16,
                 '0'..='9' => character as u16,
-                // The punctuation keys (VK_OEM_1 and so on). The keyboard goes
-                // by the scan code, so one code for all of them will do.
                 _ => 0xBA,
             };
             return (vk, first_scan + index as u8);
@@ -591,15 +610,11 @@ fn us_key(character: char) -> (u16, u8) {
     panic!("no key for {character:?}");
 }
 
-// ---- Singkhmer ----
-
 #[test]
 fn a_singkhmer_phrase_shows_while_it_is_typed_and_enter_writes_it() {
     let desk = Desk::new(Mode::Romanized);
     desk.type_keys("nh jg tv");
 
-    // Finished words show in Khmer, the word being typed as typed, and the
-    // app is told that none of it is final yet.
     assert_eq!(desk.windows.text(), "ខ្ញុំចង់tv");
     assert_eq!(desk.windows.composing().as_deref(), Some("ខ្ញុំចង់tv"));
     let (suggestions, highlight) = desk.service.suggestions();
@@ -612,7 +627,6 @@ fn a_singkhmer_phrase_shows_while_it_is_typed_and_enter_writes_it() {
     desk.windows.assert_nothing_is_composing();
     assert!(desk.service.suggestions().0.is_empty());
 
-    // With the phrase written, Enter is the app's again.
     assert!(!desk.enter());
 }
 
@@ -636,8 +650,6 @@ fn punctuation_ends_the_phrase_and_is_written_after_it() {
 
 #[test]
 fn digits_and_spaces_are_latin_when_no_phrase_is_being_typed() {
-    // Left to the app, these keys would be typed by the Khmer layout that
-    // Windows keeps under this keyboard: ១ for 1, an invisible break for Space.
     let desk = Desk::new(Mode::Romanized);
     desk.type_keys("12 3,");
     assert_eq!(desk.windows.text(), "12 3,");
@@ -663,7 +675,6 @@ fn escape_throws_the_phrase_away() {
     assert!(desk.press(VK_ESCAPE, 0x01));
     assert_eq!(desk.windows.text(), "ab");
     desk.windows.assert_nothing_is_composing();
-    // Escape with nothing being typed is the app's (it closes dialogs).
     assert!(!desk.press(VK_ESCAPE, 0x01));
 }
 
@@ -694,7 +705,10 @@ fn a_phrase_is_written_where_the_cursor_is() {
 #[test]
 fn shortcuts_are_left_to_the_app() {
     let desk = Desk::new(Mode::Romanized);
-    desk.service.set_test_modifiers(Modifiers { ctrl: true, ..Modifiers::default() });
+    desk.service.set_test_modifiers(Modifiers {
+        ctrl: true,
+        ..Modifiers::default()
+    });
     let (vk, scan) = us_key('c');
     assert!(!desk.press(vk, scan));
     assert_eq!(desk.windows.text(), "");
@@ -709,13 +723,9 @@ fn a_field_that_cannot_be_changed_gets_no_keys() {
     assert_eq!(desk.windows.text(), "");
 }
 
-// ---- Khmer ----
-
 #[test]
 fn a_khmer_syllable_typed_out_of_order_is_stored_in_order() {
     let desk = Desk::new(Mode::Khmer);
-    // ស, then ី (Shift+i), then ្រ and ្ត: the vowel too early, and the two
-    // subscripts the wrong way round.
     desk.type_keys("s");
     desk.type_shifted("i");
     desk.type_keys("jrjt");
@@ -723,12 +733,10 @@ fn a_khmer_syllable_typed_out_of_order_is_stored_in_order() {
     assert_eq!(desk.windows.text(), syllable);
     assert_eq!(desk.windows.composing().as_deref(), Some(syllable));
 
-    // The next consonant starts a new syllable; the first one is final.
     desk.type_keys("k");
     assert_eq!(desk.windows.text(), format!("{syllable}\u{1780}"));
     assert_eq!(desk.windows.composing().as_deref(), Some("\u{1780}"));
 
-    // Enter is the app's, and finishes the syllable being typed on its way.
     assert!(!desk.enter());
     assert_eq!(desk.windows.text(), format!("{syllable}\u{1780}"));
     desk.windows.assert_nothing_is_composing();
@@ -756,8 +764,6 @@ fn khmer_backspace_takes_the_last_part_off_the_syllable() {
     assert!(!desk.backspace());
 }
 
-// ---- things that happen around the typing ----
-
 #[test]
 fn switching_keyboard_finishes_what_was_being_typed() {
     let desk = Desk::new(Mode::Romanized);
@@ -773,14 +779,17 @@ fn leaving_the_field_finishes_what_was_being_typed() {
     let desk = Desk::new(Mode::Romanized);
     desk.type_keys("nh jg");
     let focus: ITfThreadMgrEventSink = desk.service.to_interface();
-    unsafe { focus.OnSetFocus(None, &desk.windows.document).expect("the keyboard hears of it") };
+    unsafe {
+        focus
+            .OnSetFocus(None, &desk.windows.document)
+            .expect("the keyboard hears of it")
+    };
     assert_eq!(desk.windows.text(), "ខ្ញុំចង់");
     desk.windows.assert_nothing_is_composing();
 }
 
 #[test]
 fn the_app_may_end_the_phrase_itself() {
-    // What an app does when the user clicks somewhere else in the text.
     let desk = Desk::new(Mode::Romanized);
     desk.type_keys("nh jg");
     assert_eq!(desk.windows.composing().as_deref(), Some("ខ្ញុំjg"));
@@ -788,7 +797,6 @@ fn the_app_may_end_the_phrase_itself() {
         let app: ITfContextOwnerCompositionServices = desk.windows.context.cast().expect("the app's side");
         app.TerminateComposition(None).expect("the composition ends");
     }
-    // The text stays as it was showing, and the keyboard starts afresh.
     assert_eq!(desk.windows.text(), "ខ្ញុំjg");
     desk.windows.assert_nothing_is_composing();
     assert!(desk.service.suggestions().0.is_empty());
@@ -799,39 +807,39 @@ fn the_app_may_end_the_phrase_itself() {
     assert_eq!(desk.windows.text(), "ខ្ញុំjgទៅ");
 }
 
-// ---- the way Windows itself reaches the keyboard ----
-
-/// What Windows does after reading the registry: ask the DLL for the object
-/// that makes text services, and have one made.
 fn made_by_the_dll() -> ITfTextInputProcessorEx {
     unsafe {
         let mut factory = std::ptr::null_mut();
         khmer_tsf::DllGetClassObject(&CLSID_TEXT_SERVICE, &IClassFactory::IID, &mut factory)
             .ok()
             .expect("the DLL knows its text service");
-        IClassFactory::from_raw(factory).CreateInstance(None).expect("a text service")
+        IClassFactory::from_raw(factory)
+            .CreateInstance(None)
+            .expect("a text service")
     }
 }
 
 #[test]
 fn the_dll_makes_a_text_service_that_answers_as_a_keyboard() {
     let service = made_by_the_dll();
-    // Windows asks the one object for each of its jobs.
     service.cast::<ITfKeyEventSink>().expect("it takes key presses");
-    service.cast::<ITfThreadMgrEventSink>().expect("it hears of focus changes");
+    service
+        .cast::<ITfThreadMgrEventSink>()
+        .expect("it hears of focus changes");
 
     unsafe {
-        // Any other identity is not this DLL's.
         let mut factory = std::ptr::null_mut();
         let other = GUID::from_u128(1);
-        assert_eq!(khmer_tsf::DllGetClassObject(&other, &IClassFactory::IID, &mut factory), CLASS_E_CLASSNOTAVAILABLE);
+        assert_eq!(
+            khmer_tsf::DllGetClassObject(&other, &IClassFactory::IID, &mut factory),
+            CLASS_E_CLASSNOTAVAILABLE
+        );
         assert!(factory.is_null());
     }
 }
 
 #[test]
 fn the_text_being_typed_is_underlined_with_dots() {
-    // Apps ask the keyboard how to draw the text that is still being typed.
     let looks: ITfDisplayAttributeProvider = made_by_the_dll().cast().expect("it says how its text looks");
     unsafe {
         let list = looks.EnumDisplayAttributeInfo().expect("the list of looks");
@@ -845,21 +853,21 @@ fn the_text_being_typed_is_underlined_with_dots() {
         look.GetAttributeInfo(&mut attribute).expect("the look itself");
         assert_eq!(attribute.lsStyle, TF_LS_DOT);
 
-        let same = looks.GetDisplayAttributeInfo(&DISPLAY_ATTRIBUTE_INPUT).expect("found by identity");
+        let same = looks
+            .GetDisplayAttributeInfo(&DISPLAY_ATTRIBUTE_INPUT)
+            .expect("found by identity");
         assert_eq!(same.GetGUID().expect("its identity"), DISPLAY_ATTRIBUTE_INPUT);
     }
 }
 
 #[test]
 fn a_keyboard_windows_does_not_know_cannot_start() {
-    // Windows hands key presses only to keyboards that are installed, so the
-    // last step of the route (Windows itself calling the keyboard for each
-    // key) cannot be tested here. What can be: being turned down leaves the
-    // service clean, and it can be turned off without harm.
     let windows = Windows::with_field("", 0);
     let service = made_by_the_dll();
     unsafe {
-        assert!(service.ActivateEx(&windows.thread_mgr, windows.client_id, TF_TMAE_SECUREMODE).is_err());
+        assert!(service
+            .ActivateEx(&windows.thread_mgr, windows.client_id, TF_TMAE_SECUREMODE)
+            .is_err());
         service.Deactivate().expect("turning it off is harmless");
     }
     assert_eq!(windows.text(), "");

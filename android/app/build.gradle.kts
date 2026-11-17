@@ -39,12 +39,9 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
-    // Runs Android view code on the computer, without a phone.
     testImplementation("org.robolectric:robolectric:4.16.1")
 }
 
-// The tests run on the computer, so they need the engine built for the
-// computer rather than for Android.
 val cargoBuildHost = tasks.register<Exec>("cargoBuildHost") {
     val exe = if (System.getProperty("os.name").lowercase().contains("windows")) ".exe" else ""
     val installedCargo = File(System.getProperty("user.home"), ".cargo/bin/cargo$exe")
@@ -55,30 +52,18 @@ val cargoBuildHost = tasks.register<Exec>("cargoBuildHost") {
 
 tasks.withType<Test>().configureEach {
     dependsOn(cargoBuildHost)
-    // Where TypingTest finds the engine.
     systemProperty("java.library.path", layout.buildDirectory.dir("cargo-host/debug").get().asFile.path)
-    // KeyboardPreviewTest draws every layout into this folder as a picture.
     systemProperty("previewDir", layout.buildDirectory.dir("keyboard-previews").get().asFile.path)
 }
 
-/**
- * Builds the Rust engine (crates/khmer-android) into one libkhmer_android.so
- * per Android processor type, so that building the app in Android Studio also
- * builds the engine. Needs Rust with the Android targets:
- *
- *   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
- */
 abstract class CargoBuild @Inject constructor(private val execOperations: ExecOperations) : DefaultTask() {
-    /** The Rust code and data: the build runs again only when these change. */
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val sources: ConfigurableFileCollection
 
-    /** Android processor type -> Rust target. */
     @get:Input
     abstract val targets: MapProperty<String, String>
 
-    /** The oldest Android version the library must run on (minSdk). */
     @get:Input
     abstract val apiLevel: Property<Int>
 
@@ -104,11 +89,8 @@ abstract class CargoBuild @Inject constructor(private val execOperations: ExecOp
             else -> "linux-x86_64"
         }
         val exe = if (windows) ".exe" else ""
-        // The NDK's compiler does the linking. It is told the target on the
-        // command line, which avoids the NDK's .cmd wrapper scripts.
         val clang = ndkDir.get().file("toolchains/llvm/prebuilt/$host/bin/clang$exe").asFile
         check(clang.exists()) { "The Android NDK compiler was not found at $clang" }
-        // Android Studio does not always pass the user's PATH on.
         val installedCargo = File(System.getProperty("user.home"), ".cargo/bin/cargo$exe")
         val cargo = if (installedCargo.exists()) installedCargo.absolutePath else "cargo"
 
@@ -146,7 +128,6 @@ androidComponents {
             )
             apiLevel.set(26)
             ndkDir.set(sdkComponents.ndkDirectory)
-            // Shared by all variants, so the engine is compiled once.
             cargoTargetDir.set(layout.buildDirectory.dir("cargo"))
         }
         variant.sources.jniLibs?.addGeneratedSourceDirectory(cargoBuild, CargoBuild::outputDir)

@@ -1,14 +1,9 @@
-//! Tests of romanized mode with the built-in data files.
-
 use khmer_core::{is_valid, normalize, Romanizer};
 
 const SENTENCES: &str = include_str!("data/sentences.tsv");
 
-/// The roadmap's goal for the prototype: the right sentence is among the first
-/// three suggestions for at least this share of the test sentences.
 const TOP_3_GOAL: f32 = 0.80;
 
-/// The test sentences as (typed, expected Khmer).
 fn sentences() -> Vec<(&'static str, String)> {
     SENTENCES
         .lines()
@@ -38,12 +33,9 @@ fn design_doc_example() {
 #[test]
 fn the_word_before_decides_between_words_spelled_the_same() {
     let top = |typed: &str| Romanizer::builtin().convert(typed)[0].text();
-    // "nh" is ខ្ញុំ (I) at the start, and ញ៉ាំ (eat) after ចង់ (want).
     assert_eq!(top("nh jg tv"), "ខ្ញុំចង់ទៅ");
     assert_eq!(top("jg nh bay"), "ចង់ញ៉ាំបាយ");
-    // "tv" is ទៅ (go), not ទីវី (TV), after ចង់.
     assert_eq!(top("jg tv"), "ចង់ទៅ");
-    // "pros" is ប្រុស (male) after កូន (child), and ព្រោះ (because) before ខ្ញុំ.
     assert_eq!(top("kon pros"), "កូនប្រុស");
     assert_eq!(top("pros nh"), "ព្រោះខ្ញុំ");
 }
@@ -60,7 +52,6 @@ fn english_stays_english() {
 fn tokens_that_are_not_letters_are_kept() {
     let top = |typed: &str| Romanizer::builtin().convert(typed)[0].text();
     assert_eq!(top("mong 7"), "ម៉ោង 7");
-    // Nothing typed, nothing suggested.
     assert!(Romanizer::builtin().convert("").is_empty());
     assert!(Romanizer::builtin().convert("   ").is_empty());
 }
@@ -86,8 +77,7 @@ fn accuracy_on_the_test_sentences() {
     let mut top_3 = 0;
     let mut misses = Vec::new();
     for (typed, expected) in &sentences {
-        let suggestions: Vec<String> =
-            Romanizer::builtin().convert(typed).iter().map(|s| s.text()).collect();
+        let suggestions: Vec<String> = Romanizer::builtin().convert(typed).iter().map(|s| s.text()).collect();
         match suggestions.iter().position(|text| text == expected) {
             Some(0) => {
                 top_1 += 1;
@@ -112,7 +102,6 @@ fn accuracy_on_the_test_sentences() {
         100.0 * top_3 as f32 / total as f32,
         misses.join("\n")
     );
-    // Shown with `cargo test -- --nocapture`.
     println!("{report}");
     assert!(top_3 as f32 / total as f32 >= TOP_3_GOAL, "{report}");
 }

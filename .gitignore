@@ -14,4 +14,4 @@ __pycache__/
 
 # From github.com/Rinzyy/sorsay, which is GPL-3.0. Kept out of the repository
 # and out of words-imported.tsv so the project is not bound to that licence.
-/datasets/19_sorsay_social_lexicon.txt
+/datasets/pairs/19_sorsay_social_lexicon.txt

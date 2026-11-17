@@ -23,22 +23,15 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSystemClock
 import org.robolectric.util.ReflectionHelpers
 
-/**
- * Types through the real keyboard service and the real engine into a
- * stand-in text field, on the computer. This checks the part no other test
- * reaches: that what the engine says ends up in the app correctly.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class TypingTest {
 
-    /** A text field: Android's own code for composing text, on a plain string. */
     private class Field(context: Context) : BaseInputConnection(View(context), true) {
         val content = SpannableStringBuilder()
 
         override fun getEditable(): Editable = content
 
-        /** Backspace and Enter arrive as key events, as in a real app. */
         override fun sendKeyEvent(event: KeyEvent): Boolean {
             if (event.action != KeyEvent.ACTION_DOWN) return true
             val cursor = Selection.getSelectionEnd(content)
@@ -67,7 +60,6 @@ class TypingTest {
         startField(EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT })
     }
 
-    /** Puts the cursor into a new, empty text field. */
     private fun startField(info: EditorInfo, text: String = "") {
         field = Field(context)
         field.content.append(text)
@@ -77,13 +69,11 @@ class TypingTest {
         service.onStartInput(info, false)
     }
 
-    /** Tells the keyboard where the cursor and the composing text are, as an app does after every change. */
     private fun report() {
         val cursor = Selection.getSelectionStart(field.content)
         service.onUpdateSelection(cursor, cursor, cursor, field.cursor, field.composingStart, field.composingEnd)
     }
 
-    /** Taps the keys for the characters of [keys]; a space taps the space bar. */
     private fun type(keys: String) {
         for (key in keys) {
             service.onKeyTap(if (key == ' ') Key("", KeyAction.SPACE, text = " ") else Key(key.toString()))
@@ -96,7 +86,6 @@ class TypingTest {
         report()
     }
 
-    /** The mode key goes Singkhmer, English, Khmer. */
     private fun switchToKhmer() {
         tap(KeyAction.MODE)
         tap(KeyAction.MODE)
@@ -127,7 +116,6 @@ class TypingTest {
     @Test
     fun khmerSyllableTypedOutOfOrderIsStoredInOrder() {
         switchToKhmer()
-        // ស + ី + ្ + រ + ្ + ត, then a space.
         type("សី្រ្ត ")
         assertEquals("ស្ត្រី ", field.text)
         assertEquals("", field.composing)
@@ -137,7 +125,6 @@ class TypingTest {
     fun aKeyCanHoldTwoCharacters() {
         switchToKhmer()
         type("ក")
-        // The ុំ key.
         service.onKeyTap(Key("ុំ"))
         report()
         type(" ")
@@ -148,7 +135,6 @@ class TypingTest {
     fun backspaceUndoesTypingThenDeletesInTheApp() {
         startField(EditorInfo().apply { inputType = InputType.TYPE_CLASS_TEXT }, text = "ab")
         type("nh")
-        // The word being typed shows as typed until Space.
         assertEquals("abnh", field.text)
         assertEquals("nh", field.composing)
 
@@ -158,7 +144,6 @@ class TypingTest {
         assertEquals("ab", field.text)
         assertEquals("", field.composing)
 
-        // Nothing is being typed any more: the app's own text goes.
         tap(KeyAction.BACKSPACE)
         assertEquals("a", field.text)
     }
@@ -177,14 +162,12 @@ class TypingTest {
         type("nh jg")
         assertEquals("abc ខ្ញុំjg", field.text)
 
-        // The user taps between "a" and "b".
         Selection.setSelection(field.content, 1)
         report()
         assertEquals("abc ខ្ញុំចង់", field.text)
         assertEquals("", field.composing)
         assertEquals(1, field.cursor)
 
-        // Typing goes on at the new place.
         type("nv  ")
         assertEquals("aនៅ bc ខ្ញុំចង់", field.text)
     }
@@ -192,7 +175,6 @@ class TypingTest {
     @Test
     fun aPhraseTheAppThrewAwayDoesNotComeBack() {
         type("nh jg")
-        // A chat app sends the message and empties the field, some time later.
         ShadowSystemClock.advanceBy(1, TimeUnit.SECONDS)
         field.content.clear()
         Selection.setSelection(field.content, 0)
@@ -217,7 +199,7 @@ class TypingTest {
     @Test
     fun switchingModeFinishesWhatWasBeingTyped() {
         type("nh")
-        tap(KeyAction.MODE) // to English
+        tap(KeyAction.MODE)
         assertEquals("ខ្ញុំ", field.text)
         assertEquals("", field.composing)
         type("ok")

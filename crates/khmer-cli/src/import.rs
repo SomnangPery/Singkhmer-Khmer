@@ -1,32 +1,9 @@
-//! `khmer import`: turns a file of Khmer/Latin pairs from another source into
-//! a words file the engine can load (`words-imported.tsv`).
-//!
-//! The input has one pair per line, in any of these shapes:
-//!
-//! ```text
-//! ខ្ញុំ: knhom
-//! knhom,ខ្ញុំ,any,other,columns
-//! ខ្ញុំ <TAB> knhom
-//! ខ្ញុំ=knhom,khnhom,nhom
-//! ```
-//!
-//! Either side may come first, except in the last shape, where the Khmer word
-//! is on the left and all its spellings on the right. Rows that cannot be used
-//! are dropped and counted by reason, so nothing disappears silently.
-//!
-//! `--freq FILE` gives a frequency list (`Khmer word <TAB> count`). A word
-//! found there gets its real share of the counts; the others get `--count`.
-
 use std::collections::{BTreeMap, HashMap};
 use std::process::ExitCode;
 
 use khmer_core::{is_valid, normalize};
 
-/// The count per million given to imported words that have no known
-/// frequency, when `--count` is not used. Low, because most words of an
-/// outside list are rare.
 const DEFAULT_COUNT: f32 = 20.0;
-/// No word gets a count per million below this.
 const LOWEST_COUNT: f32 = 0.1;
 
 pub fn run(args: &[String]) -> ExitCode {
@@ -52,10 +29,7 @@ pub fn run(args: &[String]) -> ExitCode {
             _ => paths.push(arg.clone()),
         }
     }
-    // The last path is the output; the ones before it are read in order, so
-    // put the most trusted source first: its spellings rank first.
-    let Some((output, inputs)) = paths.split_last().filter(|(_, inputs)| !inputs.is_empty())
-    else {
+    let Some((output, inputs)) = paths.split_last().filter(|(_, inputs)| !inputs.is_empty()) else {
         return usage("import needs at least one input file and an output file");
     };
     let mut text = String::new();
@@ -82,7 +56,6 @@ pub fn run(args: &[String]) -> ExitCode {
         None => HashMap::new(),
     };
 
-    // Word -> its spellings, in the order they were first seen.
     let mut order: Vec<String> = Vec::new();
     let mut spellings: HashMap<String, Vec<String>> = HashMap::new();
     let mut dropped: BTreeMap<&'static str, usize> = BTreeMap::new();
@@ -135,7 +108,6 @@ pub fn run(args: &[String]) -> ExitCode {
             }
             None => count,
         };
-        // Two decimals are plenty; drop a trailing ".00".
         let count = format!("{count:.2}");
         let count = count.trim_end_matches('0').trim_end_matches('.');
         file.push_str(&format!("{word}\t{count}\t{}\n", spellings[word].join(", ")));
@@ -159,13 +131,10 @@ pub fn run(args: &[String]) -> ExitCode {
 }
 
 fn usage(problem: &str) -> ExitCode {
-    eprintln!(
-        "{problem}\n\nusage: khmer import PAIRS_FILE... OUT_FILE [--freq FILE] [--count N] [--note TEXT]..."
-    );
+    eprintln!("{problem}\n\nusage: khmer import PAIRS_FILE... OUT_FILE [--freq FILE] [--count N] [--note TEXT]...");
     ExitCode::from(2)
 }
 
-/// Reads a frequency list (`Khmer word <TAB> count`) into counts per million.
 fn read_frequencies(text: &str) -> HashMap<String, f32> {
     let mut counts: HashMap<String, f64> = HashMap::new();
     for line in text.lines() {
@@ -173,7 +142,6 @@ fn read_frequencies(text: &str) -> HashMap<String, f32> {
         let word = normalize(columns.next().unwrap_or("").trim());
         let count: f64 = columns.next().and_then(|c| c.trim().parse().ok()).unwrap_or(0.0);
         if count > 0.0 && is_word(&word).is_ok() {
-            // The same word can appear under two typing orders: add them up.
             *counts.entry(word).or_default() += count;
         }
     }
@@ -184,13 +152,9 @@ fn read_frequencies(text: &str) -> HashMap<String, f32> {
         .collect()
 }
 
-/// The result of reading one spelling: the clean spelling, or why not.
 type Spelling = Result<String, &'static str>;
 
-/// Reads one line into a normalized Khmer word and its spellings, or says why
-/// the line cannot be used.
 fn read_line(line: &str) -> Result<(String, Vec<Spelling>), &'static str> {
-    // "word=spelling,spelling": several spellings for one word.
     if let Some((khmer, latin)) = line.split_once('=') {
         let word = normalize(khmer.trim());
         is_word(&word)?;
@@ -200,8 +164,6 @@ fn read_line(line: &str) -> Result<(String, Vec<Spelling>), &'static str> {
     Ok((word, vec![Ok(spelling)]))
 }
 
-/// Reads a line holding one pair into (normalized Khmer word, clean Latin
-/// spelling), or says why the line cannot be used.
 fn read_pair(line: &str) -> Result<(String, String), &'static str> {
     let separator = ['\t', ':', ',']
         .into_iter()
@@ -209,20 +171,19 @@ fn read_pair(line: &str) -> Result<(String, String), &'static str> {
         .ok_or("no separator between the two sides")?;
     let mut fields = line.split(separator).map(str::trim);
     let (first, second) = (fields.next().unwrap_or(""), fields.next().unwrap_or(""));
-    // Either side may be the Khmer one.
-    let (khmer, latin) =
-        if first.chars().any(is_khmer_letter) { (first, second) } else { (second, first) };
+    let (khmer, latin) = if first.chars().any(is_khmer_letter) {
+        (first, second)
+    } else {
+        (second, first)
+    };
 
     let word = normalize(khmer);
     is_word(&word)?;
     Ok((word, clean_spelling(latin)?))
 }
 
-/// Checks that a normalized string is a Khmer word the engine can store.
 fn is_word(word: &str) -> Result<(), &'static str> {
     if word.is_empty() || !word.chars().all(is_khmer_letter) {
-        // Mixed scripts, digits, punctuation, or the repeat sign ៗ, which the
-        // Latin side does not show.
         return Err("the Khmer side is not only Khmer letters");
     }
     if !is_valid(word) {
@@ -231,13 +192,11 @@ fn is_word(word: &str) -> Result<(), &'static str> {
     Ok(())
 }
 
-/// Cleans one Latin spelling, or says why it cannot be typed.
 fn clean_spelling(latin: &str) -> Spelling {
     let latin = latin.trim();
     if latin.contains(char::is_whitespace) {
         return Err("the Latin side has a space");
     }
-    // "k'nhom" can only be typed as "knhom": an apostrophe ends the token.
     let spelling: String = latin
         .chars()
         .filter(|c| !matches!(c, '\'' | '\u{2019}'))
@@ -249,7 +208,6 @@ fn clean_spelling(latin: &str) -> Spelling {
     Ok(spelling)
 }
 
-/// Khmer consonants, vowels and signs: no digits, punctuation or symbols.
 fn is_khmer_letter(c: char) -> bool {
     matches!(c, '\u{1780}'..='\u{17D3}' | '\u{17DD}')
 }
@@ -290,7 +248,6 @@ mod tests {
 
     #[test]
     fn normalizes_the_khmer_side() {
-        // ស + ី + ្រ + ្ត is stored in the right order.
         let wrong_order = "\u{179F}\u{17B8}\u{17D2}\u{179A}\u{17D2}\u{178F}: satrey";
         assert_eq!(
             read_pair(wrong_order).unwrap().0,

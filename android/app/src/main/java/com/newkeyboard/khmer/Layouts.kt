@@ -1,18 +1,13 @@
 package com.newkeyboard.khmer
 
-/** The three ways of typing. The mode key goes through them in this order. */
 enum class InputMode(val label: String) {
-    /** A Khmer layout. Keys go through the engine's Khmer mode. */
     KHMER("ខ្មែរ"),
 
-    /** Latin letters that spell Khmer words. Keys go through the engine's romanized mode. */
     SINGKHMER("Singkhmer"),
 
-    /** Plain Latin letters, written straight into the app. */
     ENGLISH("English"),
 }
 
-/** Which set of keys is showing. */
 enum class Layer { LETTERS, SYMBOLS, MORE_SYMBOLS }
 
 enum class ShiftState { OFF, ON, LOCKED }
@@ -20,24 +15,15 @@ enum class ShiftState { OFF, ON, LOCKED }
 enum class KeyAction { TEXT, SPACE, SHIFT, BACKSPACE, ENTER, MODE, LETTERS, SYMBOLS, MORE_SYMBOLS }
 
 class Key(
-    /** What is drawn on the key. Keys with an icon have none. */
     val label: String,
     val action: KeyAction = KeyAction.TEXT,
-    /** What the key types. */
     val text: String = label,
-    /** What the key types when held, shown small in its corner. */
     val longPress: String? = null,
-    /** Width, where a normal key is 1. */
     val width: Float = 1f,
 )
 
-/** Rows of keys. A row narrower than [columns] is centred. */
 class KeyboardLayout(val columns: Float, val rows: List<List<Key>>)
 
-/**
- * The key layouts. Every layout has five rows, so the keyboard keeps its
- * height when the layout changes.
- */
 object Layouts {
 
     fun get(mode: InputMode, layer: Layer, shifted: Boolean): KeyboardLayout = when (layer) {
@@ -46,7 +32,6 @@ object Layouts {
         Layer.MORE_SYMBOLS -> moreSymbols(mode)
     }
 
-    /** Keys from labels separated by spaces. [longPress] has one entry per key. */
     private fun keys(labels: String, longPress: String? = null, width: Float = 1f): List<Key> {
         val held = longPress?.split(' ')
         return labels.split(' ').mapIndexed { index, label ->
@@ -82,10 +67,6 @@ object Layouts {
         Key("", KeyAction.ENTER, width = 1.5f),
     )
 
-    /**
-     * The standard Khmer (NiDA) layout, without its rightmost keys: those are
-     * on the "more symbols" page. Holding a key gives its shifted character.
-     */
     private fun khmer(shifted: Boolean): KeyboardLayout {
         val rows = if (!shifted) {
             listOf(
@@ -136,7 +117,6 @@ object Layouts {
         ),
     )
 
-    /** Khmer digits, the independent vowels, and the rarer signs. */
     private fun moreSymbols(mode: InputMode) = KeyboardLayout(
         columns = 10f,
         rows = listOf(

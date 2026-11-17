@@ -1,27 +1,10 @@
-//! The validator: is this text stored the one correct way?
-//!
-//! It checks the Modern Khmer syllable structure of UTN #61:
-//!
-//! ```text
-//! Syllable = Base Robat? Coengs? Shifter? Vowel? Signs? Final?
-//! Coengs   = (Coeng NonRo)? Coeng Base        one or two subscripts, រ last
-//! Shifter  = [៉ ៊], plus ZWNJ only where the shifter would otherwise be drawn as ុ
-//! Signs    = one or two signs; ័ and ៝ may not come straight after ុ
-//! ```
-//!
-//! Characters that are not part of a syllable (digits, punctuation, Latin
-//! letters, spaces) are always fine on their own.
-
 use std::fmt;
 
 use crate::chars::*;
 
-/// Where and why [`validate`] rejected a text.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Invalid {
-    /// Byte offset of the offending character in the text.
     pub offset: usize,
-    /// The character that does not fit where it is.
     pub ch: char,
 }
 
@@ -37,8 +20,6 @@ impl fmt::Display for Invalid {
 
 impl std::error::Error for Invalid {}
 
-/// Checks that every Khmer syllable in `text` is in the correct stored order.
-/// On failure, reports the first character that does not fit.
 pub fn validate(text: &str) -> Result<(), Invalid> {
     let chars: Vec<char> = text.chars().collect();
     let mut i = 0;
@@ -46,7 +27,6 @@ pub fn validate(text: &str) -> Result<(), Invalid> {
         match class_of(chars[i]) {
             Class::Base => i = syllable_end(&chars, i),
             Class::Other => i += 1,
-            // A vowel, sign, shifter, robat or coeng that no syllable claimed.
             _ => {
                 let offset: usize = chars[..i].iter().map(|c| c.len_utf8()).sum();
                 return Err(Invalid { offset, ch: chars[i] });
@@ -56,13 +36,10 @@ pub fn validate(text: &str) -> Result<(), Invalid> {
     Ok(())
 }
 
-/// True if [`validate`] accepts `text`.
 pub fn is_valid(text: &str) -> bool {
     validate(text).is_ok()
 }
 
-/// Matches the longest well-formed syllable starting at the base `chars[start]`
-/// and returns the index just past it.
 fn syllable_end(chars: &[char], start: usize) -> usize {
     let at = |i: usize| chars.get(i).copied();
     let base = chars[start];
@@ -77,7 +54,6 @@ fn syllable_end(chars: &[char], start: usize) -> usize {
         let Some(sub) = at(j + 1).filter(|&c| is_base(c)) else {
             break;
         };
-        // At most two subscripts, and nothing may follow subscript រ.
         if coengs.len() == 2 || coengs.first() == Some(&RO) {
             break;
         }
@@ -101,8 +77,6 @@ fn syllable_end(chars: &[char], start: usize) -> usize {
     }
 
     if let Some(sign) = at(j).filter(|&c| class_of(c) == Class::Sign) {
-        // ុ followed by ័ or ៝ would look like a shifter drawn low, so that
-        // spelling is reserved for the shifter.
         let reserved = vowel == Some(U) && (sign == SAMYOK || sign == ATTHACAN);
         if !reserved {
             j += 1;
@@ -118,9 +92,6 @@ fn syllable_end(chars: &[char], start: usize) -> usize {
     j
 }
 
-/// A ZWNJ after a shifter is allowed only where it changes something: where,
-/// without it, the font would draw the shifter as ុ. `rest` is the text after
-/// the ZWNJ.
 fn zwnj_allowed(strong_cluster: bool, shifter: char, rest: &[char]) -> bool {
     let first = rest.first().copied();
     let second = rest.get(1).copied();
@@ -149,7 +120,6 @@ mod tests {
 
     #[test]
     fn correct_words_are_valid() {
-        // ស្ត្រី, ខ្ញុំ, ម៉្យាង (shifter after the subscript), ឱ្យ
         for word in [
             "\u{179F}\u{17D2}\u{178F}\u{17D2}\u{179A}\u{17B8}",
             "\u{1781}\u{17D2}\u{1789}\u{17BB}\u{17C6}",
@@ -162,24 +132,21 @@ mod tests {
 
     #[test]
     fn reports_the_first_character_that_does_not_fit() {
-        // កាា: the second ា is at byte 6 (each Khmer character is 3 bytes).
         assert_eq!(
             validate("\u{1780}\u{17B6}\u{17B6}"),
-            Err(Invalid { offset: 6, ch: '\u{17B6}' })
+            Err(Invalid {
+                offset: 6,
+                ch: '\u{17B6}'
+            })
         );
     }
 
     #[test]
     fn wrong_orders_are_invalid() {
-        // subscript after the vowel
         assert!(!is_valid("\u{179F}\u{17B8}\u{17D2}\u{179A}"));
-        // coeng ro before another subscript
         assert!(!is_valid("\u{179F}\u{17D2}\u{179A}\u{17D2}\u{178F}"));
-        // shifter before the subscript
         assert!(!is_valid("\u{1798}\u{17C9}\u{17D2}\u{1799}"));
-        // sign before the vowel
         assert!(!is_valid("\u{1780}\u{17C6}\u{17BB}"));
-        // robat after the vowel
         assert!(!is_valid("\u{1780}\u{17B6}\u{17CC}"));
     }
 

@@ -1,49 +1,29 @@
-//! Khmer mode: building one syllable from key presses.
-//!
-//! The [`Composer`] holds the syllable being typed. Each key either changes
-//! it, is ignored, or does not belong to it (which tells the engine to finish
-//! this syllable and start again). Whatever the keys and whatever their order,
-//! the text the composer hands back is normalized and valid: a key that would
-//! leave no valid syllable is ignored.
-
 use crate::chars::*;
 use crate::normalize::normalize;
 use crate::validate::is_valid;
 
-/// What a key press did to the syllable being typed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Push {
-    /// The key was taken into the syllable.
     Changed,
-    /// The key has no valid meaning here and was dropped.
     Ignored,
-    /// The key is not part of this syllable. The caller should take the
-    /// finished syllable and then deal with the key.
     Break,
 }
 
-/// The parts of the syllable as the user has typed them so far.
 #[derive(Clone, Default)]
 struct State {
     base: Option<char>,
     robat: bool,
-    /// The consonants of the subscripts, in typing order.
     coengs: Vec<char>,
     shifter: Option<char>,
-    /// The user asked for a ZWNJ after the shifter.
     zwnj: bool,
     vowel: Option<char>,
-    /// The user typed ុ as well as `vowel`. It is shown only where it has a
-    /// valid meaning: as a shifter drawn low (ស + ុ + ី is ស៊ី).
     under_u: bool,
     signs: Vec<char>,
     final_sign: Option<char>,
-    /// The coeng sign was typed and its consonant has not arrived yet.
     pending_coeng: bool,
 }
 
 impl State {
-    /// The parts in typing-slot order, before normalization.
     fn raw(&self, with_zwnj: bool, with_u: bool) -> String {
         let Some(base) = self.base else {
             return String::new();
@@ -72,10 +52,6 @@ impl State {
         s
     }
 
-    /// The best valid text for these parts, or `None` if there is none.
-    ///
-    /// The optional parts (ZWNJ, the extra ុ) are included when the result is
-    /// valid with them and left out when it is not.
     fn render(&self) -> Option<String> {
         if self.base.is_none() {
             return Some(String::new());
@@ -93,12 +69,10 @@ impl State {
         None
     }
 
-    /// True if the extra ុ has a valid meaning right now.
     fn u_is_meaningful(&self) -> bool {
         is_valid(&normalize(&self.raw(false, true)))
     }
 
-    /// A vowel key, when the syllable has a base.
     fn push_vowel(&mut self, c: char) -> Push {
         let Some(current) = self.vowel else {
             self.vowel = Some(c);
@@ -109,34 +83,25 @@ impl State {
         }
         let is_pair = |a: char, b: char| (current == a && c == b) || (current == b && c == a);
         if is_pair(E, II) {
-            // េ + ី looks like ើ
             self.vowel = Some(OE);
         } else if is_pair(E, AA) {
-            // េ + ា looks like ោ
             self.vowel = Some(OO);
         } else if c == U {
-            // ុ typed onto another vowel. Keep both only if the ុ has a valid
-            // meaning (a shifter drawn low); otherwise ុ replaces the vowel.
             self.under_u = true;
             if !self.u_is_meaningful() {
                 self.under_u = false;
                 self.vowel = Some(U);
             }
         } else if current == U {
-            // Another vowel typed onto ុ. Remember the ុ: if ំ arrives next
-            // (ញ + ុ + ា + ំ) the pair turns out to be a shifter after all.
             self.vowel = Some(c);
             self.under_u = true;
         } else {
-            // Any other second vowel replaces the first.
             self.vowel = Some(c);
             self.under_u = false;
         }
         Push::Changed
     }
 
-    /// Applies one key. May leave the state changed even when the key is
-    /// ignored; [`Composer::push`] restores it in that case.
     fn apply(&mut self, c: char) -> Push {
         let class = class_of(c);
 
@@ -147,7 +112,6 @@ impl State {
                     Push::Changed
                 }
                 Class::Other if c != ZWNJ => Push::Break,
-                // A vowel, sign or coeng with no consonant to attach to.
                 _ => Push::Ignored,
             };
         }
@@ -158,13 +122,11 @@ impl State {
             }
             self.pending_coeng = false;
             if class == Class::Base {
-                // The consonant of the subscript. A third subscript is dropped.
                 if self.coengs.len() < 2 {
                     self.coengs.push(c);
                 }
                 return Push::Changed;
             }
-            // Anything else cancels the coeng sign and is handled normally.
         }
 
         match class {
@@ -189,9 +151,7 @@ impl State {
                     Push::Changed
                 }
             }
-            Class::VowelPre | Class::VowelBelow | Class::VowelAbove | Class::VowelPost => {
-                self.push_vowel(c)
-            }
+            Class::VowelPre | Class::VowelBelow | Class::VowelAbove | Class::VowelPost => self.push_vowel(c),
             Class::Sign => {
                 if self.signs.contains(&c) || self.signs.len() >= 2 {
                     Push::Ignored
@@ -222,21 +182,17 @@ impl State {
     }
 }
 
-/// The syllable being typed, with undo history for backspace.
 #[derive(Default)]
 pub(crate) struct Composer {
     state: State,
-    /// The state before each accepted key, oldest first.
     history: Vec<State>,
 }
 
 impl Composer {
-    /// True when no syllable is being typed.
     pub(crate) fn is_empty(&self) -> bool {
         self.state.base.is_none()
     }
 
-    /// Feeds one key to the syllable.
     pub(crate) fn push(&mut self, c: char) -> Push {
         let before = self.state.clone();
         let result = self.state.apply(c);
@@ -244,8 +200,6 @@ impl Composer {
             self.history.push(before);
             return Push::Changed;
         }
-        // Ignored, not part of the syllable, or no valid syllable would be
-        // left: put everything back as it was.
         self.state = before;
         if result == Push::Break {
             Push::Break
@@ -254,7 +208,6 @@ impl Composer {
         }
     }
 
-    /// Undoes the last accepted key. Returns false if there was nothing to undo.
     pub(crate) fn backspace(&mut self) -> bool {
         match self.history.pop() {
             Some(previous) => {
@@ -265,13 +218,10 @@ impl Composer {
         }
     }
 
-    /// The syllable as it will be committed: normalized and valid.
     pub(crate) fn text(&self) -> String {
         self.state.render().unwrap_or_default()
     }
 
-    /// The syllable as shown while typing. Same as [`Composer::text`], plus the
-    /// coeng sign if the user has typed it and its consonant is still to come.
     pub(crate) fn preedit(&self) -> String {
         let mut text = self.text();
         if self.state.pending_coeng {
@@ -280,14 +230,12 @@ impl Composer {
         text
     }
 
-    /// Takes the finished syllable and starts afresh.
     pub(crate) fn take(&mut self) -> String {
         let text = self.text();
         self.clear();
         text
     }
 
-    /// Throws away the syllable being typed.
     pub(crate) fn clear(&mut self) {
         self.state = State::default();
         self.history.clear();
@@ -328,7 +276,6 @@ mod tests {
     #[test]
     fn u_with_an_above_vowel_becomes_a_shifter() {
         assert_eq!(typed("\u{179F}\u{17BB}\u{17B8}"), "\u{179F}\u{17CA}\u{17B8}");
-        // ញ + ុ + ា + ំ : the ុ only makes sense once the ំ arrives.
         assert_eq!(typed("\u{1789}\u{17BB}\u{17B6}"), "\u{1789}\u{17B6}");
         assert_eq!(
             typed("\u{1789}\u{17BB}\u{17B6}\u{17C6}"),

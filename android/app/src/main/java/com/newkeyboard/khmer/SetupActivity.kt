@@ -7,10 +7,6 @@ import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 
-/**
- * The screen behind the app icon. A keyboard cannot turn itself on: the user
- * has to do that in the system settings, and this screen leads them there.
- */
 class SetupActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-Downloads all newly discovered open datasets:
-1. Akkhara-Demo Space:
-   - abbreviations.tsv
-   - demo_examples.tsv
-   - real_chat.tsv
-2. Leangsuor Latin-to-Khmer model:
-   - GRU test results (1,067 parallel sentences)
-   - LSTM test results (1,000 parallel sentences)
-3. Kaikki.org Wiktionary dump:
-   - Streamed download + conversion of romanizations to clean ASCII pairs
-4. Merges and formats all pairs for `khmer import`
-5. Adds real-world sentence pairs to `crates/khmer-core/tests/data/sentences.tsv`
-"""
 
 import json
 import os
@@ -22,8 +8,9 @@ import unicodedata
 import urllib.request
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATASETS_DIR = BASE_DIR / "datasets"
+DATASETS_DIR = Path(__file__).resolve().parent.parent
+PAIRS_DIR = DATASETS_DIR / "pairs"
+SENTENCES_DIR = DATASETS_DIR / "sentences"
 DOWNLOADS_DIR = DATASETS_DIR / "downloads"
 DOWNLOADS_DIR.mkdir(exist_ok=True)
 
@@ -40,13 +27,10 @@ def is_khmer_word(word: str) -> bool:
 
 
 def clean_latin_spelling(s: str) -> str:
-    """Normalize unicode to ASCII a-z."""
     s = s.strip().lower()
-    # Replace common phonetic chars
     s = s.replace("ə", "e").replace("ɑ", "a").replace("ŏ", "o").replace("ŭ", "u")
     s = s.replace("ɨ", "u").replace("ɛ", "e").replace("ɔ", "o").replace("ɲ", "nh")
     s = s.replace("ŋ", "ng").replace("ʔ", "").replace("ʼ", "").replace("'", "")
-    # Decompose diacritics
     nfkd = unicodedata.normalize("NFKD", s)
     ascii_only = "".join(c for c in nfkd if not unicodedata.combining(c))
     ascii_only = re.sub(r"[^a-z]", "", ascii_only)
@@ -83,7 +67,6 @@ def stream_download(url: str, dest: Path, desc: str) -> bool:
         return False
 
 
-# ── 1. Akkhara-Demo Space Files ───────────────────────────────────────
 def process_akkhara_demo():
     print("\n--- 1. Akkhara-Demo Space Data ---")
     files = {
@@ -95,7 +78,6 @@ def process_akkhara_demo():
         dest = DOWNLOADS_DIR / f"akkhara_demo_{name}"
         stream_download(url, dest, f"Akkhara Demo {name}")
 
-    # Process abbreviations into pairs
     abbrev_file = DOWNLOADS_DIR / "akkhara_demo_abbreviations.tsv"
     abbrev_pairs = []
     if abbrev_file.exists():
@@ -111,14 +93,13 @@ def process_akkhara_demo():
                 if abbrev and is_khmer_word(khmer):
                     abbrev_pairs.append((khmer, abbrev))
 
-    out_abbrev = DATASETS_DIR / "03_akkhara_abbrev.txt"
+    out_abbrev = PAIRS_DIR / "03_akkhara_abbrev.txt"
     with open(out_abbrev, "w", encoding="utf-8") as f:
         f.write("# Source: https://huggingface.co/spaces/muyleanging/Akkhara-Demo (abbreviations.tsv)\n\n")
         for khmer, latin in abbrev_pairs:
             f.write(f"{khmer}\t{latin}\n")
     print(f"  Extracted {len(abbrev_pairs)} valid single-word abbreviations -> {out_abbrev.name}")
 
-    # Process sentence pairs from real_chat and demo_examples
     new_sentences = []
     for fname in ["akkhara_demo_real_chat.tsv", "akkhara_demo_demo_examples.tsv"]:
         path = DOWNLOADS_DIR / fname
@@ -141,7 +122,6 @@ def process_akkhara_demo():
     return new_sentences
 
 
-# ── 2. Leangsuor Transliteration Models ──────────────────────────────
 def process_leangsuor():
     print("\n--- 2. Leangsuor Transliteration Evaluation Datasets ---")
     urls = [
@@ -162,12 +142,9 @@ def process_leangsuor():
                     roman = item.get("roman", "").strip()
                     khmer = item.get("khmer", "").strip()
                     if roman and khmer:
-                        # Khmer here has spaces between words (segmented)
-                        # We save the unspaced sentence for sentence tests
                         unspaced_khmer = khmer.replace(" ", "")
                         sentences.append((roman, unspaced_khmer))
 
-                        # Extract 1:1 aligned word tokens where word count matches
                         r_words = roman.split()
                         k_words = khmer.split()
                         if len(r_words) == len(k_words):
@@ -179,7 +156,7 @@ def process_leangsuor():
             except Exception as e:
                 print(f"  Error reading {dest.name}: {e}")
 
-    out_pairs = DATASETS_DIR / "04_leangsuor_pairs.txt"
+    out_pairs = PAIRS_DIR / "04_leangsuor_pairs.txt"
     with open(out_pairs, "w", encoding="utf-8") as f:
         f.write("# Source: https://huggingface.co/leangsuor/latin_to_khmer_transliteration_model\n\n")
         count = 0
@@ -191,7 +168,6 @@ def process_leangsuor():
     return sentences
 
 
-# ── 3. Kaikki Wiktionary Dump ─────────────────────────────────────────
 def process_kaikki():
     print("\n--- 3. Kaikki.org Wiktionary Khmer Dump ---")
     url = "https://kaikki.org/dictionary/Khmer/kaikki.org-dictionary-Khmer.jsonl"
@@ -229,7 +205,7 @@ def process_kaikki():
                             if clean and len(clean) >= 2:
                                 entries.setdefault(word, set()).add(clean)
 
-    out_kaikki = DATASETS_DIR / "05_kaikki_wiktionary.txt"
+    out_kaikki = PAIRS_DIR / "05_kaikki_wiktionary.txt"
     with open(out_kaikki, "w", encoding="utf-8") as f:
         f.write("# Source: https://kaikki.org/dictionary/Khmer/ (Wiktionary extract)\n\n")
         total = 0
@@ -248,10 +224,8 @@ def main():
     leangsuor_sentences = process_leangsuor()
     process_kaikki()
 
-    # Save all new evaluation sentences into datasets/all_new_sentences.tsv
     all_sentences = demo_sentences + leangsuor_sentences
-    # Read preview sentences if present
-    prev_sent = DATASETS_DIR / "02_akkhara_sentences.tsv"
+    prev_sent = SENTENCES_DIR / "02_akkhara_sentences.tsv"
     if prev_sent.exists():
         for line in prev_sent.read_text(encoding="utf-8").splitlines():
             line = line.strip()
@@ -259,7 +233,6 @@ def main():
                 inp, tgt = line.split("\t", 1)
                 all_sentences.append((inp.strip(), tgt.strip()))
 
-    # Deduplicate sentences by input
     seen_inputs = set()
     unique_sentences = []
     for inp, tgt in all_sentences:
@@ -267,7 +240,7 @@ def main():
             seen_inputs.add(inp)
             unique_sentences.append((inp, tgt))
 
-    out_sent = DATASETS_DIR / "all_gathered_sentences.tsv"
+    out_sent = SENTENCES_DIR / "all_gathered_sentences.tsv"
     with open(out_sent, "w", encoding="utf-8") as f:
         f.write("# All gathered benchmark sentences from Akkhara and Leangsuor\n\n")
         for inp, tgt in unique_sentences:

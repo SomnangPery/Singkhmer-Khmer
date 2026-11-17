@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-Download and convert all available Singkhmer-to-Khmer datasets into
-the pair-file format that `khmer import` expects.
-
-Run with:
-    python datasets/fetch_all.py
-
-Requires network access (run outside sandbox).
-"""
 
 import json
 import os
@@ -16,13 +7,14 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-DATASETS_DIR = Path(__file__).parent
+DATASETS_DIR = Path(__file__).resolve().parent.parent
+PAIRS_DIR = DATASETS_DIR / "pairs"
+SENTENCES_DIR = DATASETS_DIR / "sentences"
 DOWNLOADS_DIR = DATASETS_DIR / "downloads"
 DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 
 def download(url: str, dest: Path, description: str) -> bool:
-    """Download a URL to a file. Returns True on success."""
     if dest.exists() and dest.stat().st_size > 0:
         print(f"  [skip] {description} already downloaded: {dest.name}")
         return True
@@ -37,7 +29,6 @@ def download(url: str, dest: Path, description: str) -> bool:
         return True
     except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
         print(f"    FAILED: {e}")
-        # Remove empty files
         if dest.exists() and dest.stat().st_size == 0:
             dest.unlink()
         return False
@@ -82,7 +73,6 @@ def write_multi_spelling(entries, out_path, header=""):
 
 
 def parse_generic_pairs(text: str) -> list:
-    """Parse a text file with Khmer/Latin pairs in various formats."""
     pairs = []
     for line in text.strip().split("\n"):
         line = line.strip()
@@ -101,7 +91,6 @@ def parse_generic_pairs(text: str) -> list:
     return pairs
 
 
-# ── 1. Chhunneng/khmer-text-transliteration ──────────────────────────
 def fetch_chhunneng():
     print("\n═══ 1. Chhunneng/khmer-text-transliteration ═══")
     base = "https://raw.githubusercontent.com/Chhunneng/khmer-text-transliteration/main/"
@@ -115,16 +104,14 @@ def fetch_chhunneng():
             text = dest.read_text(encoding="utf-8", errors="replace")
             all_pairs.extend(parse_generic_pairs(text))
     if all_pairs:
-        write_pairs(all_pairs, DATASETS_DIR / "01_chhunneng.txt",
+        write_pairs(all_pairs, PAIRS_DIR / "01_chhunneng.txt",
                     "Source: https://github.com/Chhunneng/khmer-text-transliteration\n"
                     "License: MIT, Copyright (c) 2025 Chrea Chanchhunneng")
     return len(all_pairs)
 
 
-# ── 2. Akkhara-Sing-Khmer Preview (HuggingFace rows API) ────────────
 def fetch_akkhara_preview():
     print("\n═══ 2. Akkhara-Sing-Khmer Preview ═══")
-    # Use the datasets-server rows API which returns JSON directly
     base_url = "https://datasets-server.huggingface.co/rows"
     configs = {
         "pairs": "default",
@@ -135,7 +122,6 @@ def fetch_akkhara_preview():
     all_lexicon_entries = {}
 
     for name, config in configs.items():
-        # Try to get up to 1000 rows
         for offset in range(0, 2000, 100):
             url = f"{base_url}?dataset=muyleanging/Akkhara-Sing-Khmer-Preview&config={config}&split=train&offset={offset}&length=100"
             dest = DOWNLOADS_DIR / f"akkhara_preview_{name}_{offset}.json"
@@ -154,7 +140,6 @@ def fetch_akkhara_preview():
                 for r in rows:
                     row = r.get("row", r)
                     if name == "pairs":
-                        # Try various field names
                         inp = ""
                         target = ""
                         for k in ["input", "sing_khmer", "romanized", "latin", "source"]:
@@ -196,14 +181,12 @@ def fetch_akkhara_preview():
                                 else:
                                     all_lexicon_entries[khmer] = sp_list
 
-                # If fewer than 100 rows returned, we've reached the end
                 if len(rows) < 100:
                     break
             except (json.JSONDecodeError, KeyError, TypeError) as e:
                 print(f"    Parse error at offset {offset}: {e}")
                 break
 
-    # Print schema of first result for debugging
     first_file = DOWNLOADS_DIR / "akkhara_preview_pairs_0.json"
     if first_file.exists():
         try:
@@ -212,7 +195,6 @@ def fetch_akkhara_preview():
             if rows:
                 row = rows[0].get("row", rows[0])
                 print(f"  [schema] pairs keys: {list(row.keys())}")
-                # Print first row for debugging
                 print(f"  [sample] first row: {json.dumps(row, ensure_ascii=False)[:200]}")
         except Exception:
             pass
@@ -229,25 +211,22 @@ def fetch_akkhara_preview():
         except Exception:
             pass
 
-    # Write sentence pairs for test data
     if all_sentence_pairs:
-        with open(DATASETS_DIR / "02_akkhara_sentences.tsv", "w", encoding="utf-8") as f:
+        with open(SENTENCES_DIR / "02_akkhara_sentences.tsv", "w", encoding="utf-8") as f:
             f.write("# Source: https://huggingface.co/datasets/muyleanging/Akkhara-Sing-Khmer-Preview\n")
             f.write("# License: CC BY-SA 4.0\n\n")
             for romanized, khmer in all_sentence_pairs:
                 f.write(f"{romanized}\t{khmer}\n")
         print(f"  [wrote] 02_akkhara_sentences.tsv: {len(all_sentence_pairs)} sentences")
 
-    # Write lexicon entries as import-ready pairs
     if all_lexicon_entries:
-        write_multi_spelling(all_lexicon_entries, DATASETS_DIR / "02_akkhara_lexicon.txt",
+        write_multi_spelling(all_lexicon_entries, PAIRS_DIR / "02_akkhara_lexicon.txt",
                            "Source: https://huggingface.co/datasets/muyleanging/Akkhara-Sing-Khmer-Preview\n"
                            "License: CC BY-SA 4.0")
 
     return len(all_sentence_pairs) + sum(len(v) for v in all_lexicon_entries.values())
 
 
-# ── 3. Akkhara-Sing-Khmer FULL (may need access request) ────────────
 def fetch_akkhara_full():
     print("\n═══ 3. Akkhara-Sing-Khmer (full dataset, may need access) ═══")
     base_url = "https://datasets-server.huggingface.co/rows"
@@ -277,10 +256,8 @@ def fetch_akkhara_full():
     return total
 
 
-# ── 4. Seanghay khmer-latin-name-transformer ─────────────────────────
 def fetch_seanghay_names():
     print("\n═══ 4. seanghay/khmer-latin-name-transformer ═══")
-    # Try to find data files in the repo
     urls = [
         ("https://raw.githubusercontent.com/seanghay/khmer-latin-name-transformer/main/data/names.tsv", "names.tsv"),
         ("https://raw.githubusercontent.com/seanghay/khmer-latin-name-transformer/main/data/train.tsv", "train.tsv"),
@@ -298,13 +275,12 @@ def fetch_seanghay_names():
             all_pairs.extend(parse_generic_pairs(text))
 
     if all_pairs:
-        write_pairs(all_pairs, DATASETS_DIR / "04_seanghay_names.txt",
+        write_pairs(all_pairs, PAIRS_DIR / "04_seanghay_names.txt",
                     "Source: https://github.com/seanghay/khmer-latin-name-transformer\n"
                     "License: Check repository")
     return len(all_pairs)
 
 
-# ── 5. SIL/SEALang frequency list ───────────────────────────────────
 def fetch_sil_frequency():
     print("\n═══ 5. SIL NRSI / SEALang frequency list ═══")
     urls = [
@@ -323,7 +299,6 @@ def fetch_sil_frequency():
     return 0
 
 
-# ── 6. Google language-resources Khmer ───────────────────────────────
 def fetch_google_km():
     print("\n═══ 6. google/language-resources (km) ═══")
     urls = [
@@ -343,7 +318,6 @@ def fetch_google_km():
     return 0
 
 
-# ── 7. Kaikki.org Wiktionary Khmer ──────────────────────────────────
 def fetch_kaikki():
     print("\n═══ 7. Kaikki.org Wiktionary Khmer dump ═══")
     url = "https://kaikki.org/dictionary/Khmer/kaikki.org-dictionary-Khmer.jsonl"
@@ -369,7 +343,6 @@ def fetch_kaikki():
 
         romanizations = set()
 
-        # "forms" with romanization tags
         for form in entry.get("forms", []):
             form_text = form.get("form", "")
             tags = form.get("tags", [])
@@ -378,7 +351,6 @@ def fetch_kaikki():
                 if clean and is_latin_spelling(clean):
                     romanizations.add(clean)
 
-        # "sounds" → "roman" field
         for sound in entry.get("sounds", []):
             for key in ["roman", "romanization"]:
                 val = sound.get(key, "")
@@ -392,7 +364,7 @@ def fetch_kaikki():
             total_pairs += len(romanizations)
 
     if entries:
-        write_multi_spelling(entries, DATASETS_DIR / "07_kaikki_wiktionary.txt",
+        write_multi_spelling(entries, PAIRS_DIR / "07_kaikki_wiktionary.txt",
                            "Source: https://kaikki.org/dictionary/Khmer/ (Wiktionary extract)\n"
                            "License: CC BY-SA 3.0 / GFDL")
     else:
@@ -402,7 +374,6 @@ def fetch_kaikki():
     return total_pairs
 
 
-# ── 8. phonsobon/khmer-pronunciation-dictionary (HuggingFace) ───────
 def fetch_phonsobon():
     print("\n═══ 8. phonsobon/khmer-pronunciation-dictionary ═══")
     url = "https://datasets-server.huggingface.co/rows?dataset=phonsobon/khmer-pronunciation-dictionary&config=default&split=train&offset=0&length=100"
@@ -426,7 +397,6 @@ def fetch_phonsobon():
     return 0
 
 
-# ── 9. seanghay/khmer-dictionary-44k ────────────────────────────────
 def fetch_seanghay_dict():
     print("\n═══ 9. seanghay/khmer-dictionary-44k ═══")
     urls = [
@@ -458,7 +428,6 @@ def fetch_seanghay_dict():
     return 0
 
 
-# ── Main ─────────────────────────────────────────────────────────────
 def main():
     print("=" * 70)
     print("  Singkhmer → Khmer Dataset Downloader")
@@ -483,10 +452,9 @@ def main():
         status = f"{count:>8,} entries" if count > 0 else "  no data / needs access"
         print(f"  {name:40s} {status}")
 
-    print(f"\n  Output files in: {DATASETS_DIR}")
+    print(f"\n  Output files in: {PAIRS_DIR}")
 
-    # List output files
-    out_files = sorted(f for f in DATASETS_DIR.iterdir()
+    out_files = sorted(f for f in PAIRS_DIR.iterdir()
                        if f.suffix in (".txt", ".tsv") and f.name[0].isdigit())
     if out_files:
         print("\n  Import-ready files:")
@@ -495,10 +463,10 @@ def main():
             print(f"    {f.name:40s} ({size:>10,} bytes)")
 
     print("\n  Next steps:")
-    print("    1. Review the downloaded files in datasets/")
+    print("    1. Review the downloaded files in datasets/pairs/")
     print("    2. Import with:")
-    print("       cargo run -p khmer-cli -- import datasets/01_chhunneng.txt \\")
-    print("         datasets/02_akkhara_lexicon.txt \\")
+    print("       cargo run -p khmer-cli -- import datasets/pairs/01_chhunneng.txt \\")
+    print("         datasets/pairs/02_akkhara_lexicon.txt \\")
     print("         crates/khmer-core/data/words-imported.tsv \\")
     print("         --freq datasets/downloads/sil_seafreq.txt \\")
     print('         --note "Source: Chhunneng (MIT), Akkhara (CC BY-SA 4.0)"')
