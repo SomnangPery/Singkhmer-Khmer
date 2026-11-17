@@ -23,16 +23,21 @@ param(
     # For checking the look: saves a picture of the window instead of showing
     # it. -Tab picks the tab: 0 My words, 1 Share.
     [string]$Snapshot,
-    [int]$Tab = 0
+    [int]$Tab = 0,
+    # For checking the form link: prints it for these lines and stops.
+    [string[]]$PrintLink
 )
 
 # ---- where shared words go ----
 #
-# The Google Form for shared words. Leave empty to switch sharing off.
-# $FormUrl is the form's address ending in /viewform; $FormWordsField is the
-# "entry.<number>" of its "Words" question (from the form's pre-filled link).
-$FormUrl = ''
-$FormWordsField = ''
+# The Google Form for shared words. Leave $FormUrl empty to switch sharing
+# off. $FormUrl is the form's address ending in /viewform. The two fields are
+# the "entry.<number>" of its questions, from the form's pre-filled link:
+# the Khmer question (a paragraph) gets one "spelling = Khmer" line per word,
+# and the Singkhmer question gets the spellings on one line.
+$FormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSe2-on-wyrh2fevqq8J9xHY5pr8sWre5k0pcGvKpGgDJTcXRA/viewform'
+$FormWordsField = 'entry.1030374765'
+$FormSpellingsField = 'entry.1067540385'
 # A pre-filled link holds this many words at most; more go in a second send.
 $MostPerSend = 25
 
@@ -83,12 +88,24 @@ function Test-Khmer([string]$text) {
     $text.Length -gt 0 -and -not ($text.ToCharArray() | Where-Object { [int]$_ -lt 0x1780 -or [int]$_ -gt 0x17FF })
 }
 
-# Opens the form in the browser with the words filled in. Each line is
+# The link that opens the form with the words filled in. Each line is
 # "spelling = Khmer", with what the keyboard gave when the user reported it.
+function Get-FormLink($lines) {
+    $spellings = @($lines | ForEach-Object { ($_ -split '=', 2)[0].Trim() }) -join ', '
+    $url = "$FormUrl" + '?usp=pp_url&' + $FormWordsField + '=' + [Uri]::EscapeDataString(($lines -join "`n"))
+    if ($FormSpellingsField) {
+        $url += '&' + $FormSpellingsField + '=' + [Uri]::EscapeDataString($spellings)
+    }
+    $url
+}
+
 function Send-Words($lines) {
-    $value = ($lines -join "`n")
-    $url = "$FormUrl" + '?usp=pp_url&' + $FormWordsField + '=' + [Uri]::EscapeDataString($value)
-    Start-Process $url
+    Start-Process (Get-FormLink $lines)
+}
+
+if ($PrintLink) {
+    Get-FormLink $PrintLink
+    return
 }
 
 $Words = Read-Pairs $File

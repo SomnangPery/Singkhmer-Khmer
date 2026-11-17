@@ -495,17 +495,25 @@ Users send words from the Share tab of the "My words" window
    Sent pairs are listed in `shared.txt` so they are not offered again.
 3. You download the form's answers and turn them into a pairs file.
 
-**Setting up the form** (once). In Google Forms, make a form with:
+**The form.** "Singkhmer to Khmer Vocabulary Collection", published to anyone
+with the link, with no sign-in and no email collected. Its questions:
 
-- a **Paragraph** question titled **Words**,
-- a required **Checkboxes** question titled **Permission**, with one option:
-  "I give these words to the public domain (CC0 1.0), so anyone may use them."
+| Question | Type | Field | Filled by the keyboard with |
+| --- | --- | --- | --- |
+| Enter the Singkhmer word you want to submit | Short answer | `entry.1067540385` | the spellings: `srolanh, tv` |
+| What does this word mean in Khmer? | Paragraph | `entry.1030374765` | one line per word: `srolanh = ស្រលាញ់` |
 
-Then ⋮ → **Get pre-filled link**, type `test` in Words, **Get link**, copy it.
-It looks like `https://docs.google.com/forms/d/e/<id>/viewform?usp=pp_url&entry.123456=test`.
-Put the part before `?` in `$FormUrl` and `entry.123456` in `$FormWordsField`
-at the top of `windows/my-words.ps1`. While either is empty, Send is switched
-off.
+The address and both fields are set at the top of `windows/my-words.ps1`
+(`$FormUrl`, `$FormWordsField`, `$FormSpellingsField`); with `$FormUrl` empty,
+Send is switched off. `-PrintLink 'tv = ធ្វើ'` prints the link it would open.
+The fields come from the form's ⋮ → **Get pre-filled link**. They stay the same
+when a question's wording changes, but a deleted and remade question gets a
+new one, which must then be copied into `my-words.ps1` and released.
+
+The form should also have a required **Checkboxes** question titled
+**Permission**, with one option: "I give these words to the public domain
+(CC0 1.0), so anyone may use them." The import script skips answers without
+it, and warns when the form has no such question.
 
 **Bringing the words in.** In the form's Responses → **View in Sheets**, then
 File → Download → Comma-separated values, and:
@@ -516,7 +524,8 @@ python datasets/scripts/import_shared_words.py answers.csv
 
 It writes `datasets/pairs/22_bunny_shared_words.txt`, keeping a pair only when
 at least two answers sent it (`--min-people`), and skipping answers without
-the permission box ticked. From there it goes into `words-imported.tsv` like
+the permission box ticked. Answers people typed into the form by hand (a
+spelling in one question, the Khmer word in the other) count too. From there it goes into `words-imported.tsv` like
 the other pair files.
 
 ### Accuracy
