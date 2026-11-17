@@ -690,6 +690,19 @@ fn the_down_arrow_and_enter_pick_another_suggestion() {
     assert!(desk.enter());
     assert_eq!(desk.windows.text(), suggestions[1]);
     desk.windows.assert_nothing_is_composing();
+    assert_eq!(
+        desk.service.corrections_for_tests(),
+        [("tv".to_string(), suggestions[1].clone())],
+        "picking another suggestion notes the word it corrects"
+    );
+}
+
+#[test]
+fn the_top_suggestion_notes_no_correction() {
+    let desk = Desk::new(Mode::Romanized);
+    desk.type_keys("nh jg tv");
+    assert!(desk.enter());
+    assert!(desk.service.corrections_for_tests().is_empty());
 }
 
 #[test]

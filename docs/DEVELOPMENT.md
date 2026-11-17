@@ -101,13 +101,13 @@ crates/khmer-windows/       the Windows keyboard (builds khmer_tsf.dll)
   src/service.rs            the keyboard: passes keys to the engine, writes its answers into the app
   src/keys.rs               which key does what in each mode; edit this to move a key
   src/candidates.rs         the suggestion popup (light/dark, "Add my word" button)
-  src/my_words.rs           reads the user's my-words.txt, opens the editor
+  src/my_words.rs           reads the user's my-words.txt, notes corrections in learned.txt, opens the editor
   src/register.rs           tells Windows that the keyboard exists
   tests/typing.rs           types into a stand-in text field through the real Windows text framework
   tests/preview.rs          draws the suggestion window into a picture
 windows/install.ps1         installs the Windows keyboard on this PC, or removes it
 windows/setup.ps1           the one-line install from GitHub: downloads the release, runs install.ps1
-windows/my-words.ps1        the "my words" editor (installed with a Start menu entry)
+windows/my-words.ps1        the "my words" window: My words and Share tabs (installed with a Start menu entry)
 ```
 
 ## Running it
@@ -480,6 +480,44 @@ reason (a space in the Latin side, a Khmer side with digits or the repeat sign
 ៗ, and so on). It replaces the output file, so to combine several sources, join
 their pair files into one first. Before importing, check that the source's
 licence allows the use, and add it to `THIRD-PARTY-NOTICES.md`.
+
+### Words shared by users
+
+Users send words from the Share tab of the "My words" window
+(`windows/my-words.ps1`), and with "Wrong word?" in the popup:
+
+1. Picking the second or third suggestion makes the engine note the words it
+   corrected (`Engine::take_corrections`); the Windows keyboard appends them to
+   `%APPDATA%\Bunny Keyboard\learned.txt` as `spelling = word`. Only those word
+   pairs, never the text around them.
+2. The Share tab lists those and the user's own words. **Send** opens a Google
+   Form in the browser with them pre-filled; the user presses Submit there.
+   Sent pairs are listed in `shared.txt` so they are not offered again.
+3. You download the form's answers and turn them into a pairs file.
+
+**Setting up the form** (once). In Google Forms, make a form with:
+
+- a **Paragraph** question titled **Words**,
+- a required **Checkboxes** question titled **Permission**, with one option:
+  "I give these words to the public domain (CC0 1.0), so anyone may use them."
+
+Then ⋮ → **Get pre-filled link**, type `test` in Words, **Get link**, copy it.
+It looks like `https://docs.google.com/forms/d/e/<id>/viewform?usp=pp_url&entry.123456=test`.
+Put the part before `?` in `$FormUrl` and `entry.123456` in `$FormWordsField`
+at the top of `windows/my-words.ps1`. While either is empty, Send is switched
+off.
+
+**Bringing the words in.** In the form's Responses → **View in Sheets**, then
+File → Download → Comma-separated values, and:
+
+```
+python datasets/scripts/import_shared_words.py answers.csv
+```
+
+It writes `datasets/pairs/22_bunny_shared_words.txt`, keeping a pair only when
+at least two answers sent it (`--min-people`), and skipping answers without
+the permission box ticked. From there it goes into `words-imported.tsv` like
+the other pair files.
 
 ### Accuracy
 

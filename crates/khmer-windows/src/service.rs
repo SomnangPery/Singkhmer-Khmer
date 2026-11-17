@@ -78,6 +78,8 @@ struct Inner {
 
     test_mode: Option<Mode>,
     test_modifiers: Option<Modifiers>,
+    /// What a test typed would have added to learned.txt.
+    test_corrections: Vec<(String, String)>,
 }
 
 impl TextService {
@@ -100,6 +102,7 @@ impl TextService {
                 show_window: true,
                 test_mode: None,
                 test_modifiers: None,
+                test_corrections: Vec::new(),
             }),
         }
     }
@@ -121,6 +124,12 @@ impl TextService {
 
     pub fn set_test_modifiers(&self, held: Modifiers) {
         self.inner.borrow_mut().test_modifiers = Some(held);
+    }
+
+    /// The corrections noted so far, in a test (a real service writes them
+    /// to learned.txt instead).
+    pub fn corrections_for_tests(&self) -> Vec<(String, String)> {
+        self.inner.borrow().test_corrections.clone()
     }
 
     pub fn suggestions(&self) -> (Vec<String>, usize) {
@@ -296,6 +305,19 @@ fn is_disabled(context: &ITfContext) -> bool {
 }
 
 fn apply(this: &ComObject<TextService>, context: &ITfContext, commit: String, preedit: String) {
+    // A suggestion picked instead of the top one: note the words it
+    // corrected, for the user to share later if they want to.
+    let corrections = {
+        let mut inner = this.inner.borrow_mut();
+        let corrections = inner.engine.take_corrections();
+        if inner.test_mode.is_some() {
+            inner.test_corrections.extend(corrections);
+            Vec::new()
+        } else {
+            corrections
+        }
+    };
+    my_words::remember(&corrections);
     let client_id = this.inner.borrow().client_id;
     let service = this.clone();
     let target = context.clone();
@@ -340,7 +362,11 @@ fn refresh_window(this: &ComObject<TextService>) {
             header: inner.engine.typed(),
             items,
             highlight: inner.highlight,
-            footer: my_words::editor().map(|_| "Add my word".to_string()),
+            buttons: if my_words::editor().is_some() {
+                vec!["+ Add my word".to_string(), "Wrong word?".to_string()]
+            } else {
+                Vec::new()
+            },
             hover: None,
         };
         (view, inner.anchor, inner.window.take(), inner.show_window)
@@ -359,12 +385,19 @@ fn refresh_window(this: &ComObject<TextService>) {
             });
         }));
         let service = this.clone();
-        window.on_footer(Rc::new(move || {
+        window.on_button(Rc::new(move |button| {
             let _ = guard(|| {
-                // The last word typed is the one the user wants to add.
-                let typed = service.inner.borrow().engine.typed();
+                let (typed, got) = {
+                    let inner = service.inner.borrow();
+                    (inner.engine.typed(), inner.engine.candidates().into_iter().next().unwrap_or_default())
+                };
+                // The last word typed is the one the user most likely means.
                 let spelling = typed.split_whitespace().last().unwrap_or("").to_string();
-                my_words::open_editor(&spelling);
+                if button == 0 {
+                    my_words::open_editor(&my_words::Request::Add { spelling });
+                } else {
+                    my_words::open_editor(&my_words::Request::Report { spelling, typed, got });
+                }
                 Ok(())
             });
         }));

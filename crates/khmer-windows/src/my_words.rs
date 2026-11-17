@@ -1,9 +1,14 @@
-//! The user's own words: `%APPDATA%\Bunny Keyboard\my-words.txt`.
+//! The user's own words, in `%APPDATA%\Bunny Keyboard`:
 //!
-//! The file is written by the "my words" editor (`windows/my-words.ps1`,
-//! installed next to this DLL) or by hand in Notepad. Each app that types
-//! with the keyboard reads it again whenever it has changed, so a new word
-//! works everywhere at the next key press.
+//! * `my-words.txt`: words the user added, which come first in the
+//!   suggestions. Written by the "my words" editor (`windows/my-words.ps1`,
+//!   installed next to this DLL) or by hand in Notepad. Each app that types
+//!   with the keyboard reads it again whenever it has changed, so a new word
+//!   works everywhere at the next key press.
+//! * `learned.txt`: words the user corrected by picking a suggestion other
+//!   than the first. Only the word pairs (`srolanh = ស្រលាញ់`), never the text
+//!   around them. They stay on the PC; the editor's Share tab lets the user
+//!   send the ones they choose.
 
 use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
@@ -21,9 +26,30 @@ const EDITOR: &str = "my-words.ps1";
 /// No console window for the editor's PowerShell.
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-pub fn file() -> Option<PathBuf> {
+fn folder() -> Option<PathBuf> {
     let folder = std::env::var_os("APPDATA")?;
-    Some(PathBuf::from(folder).join("Bunny Keyboard").join("my-words.txt"))
+    Some(PathBuf::from(folder).join("Bunny Keyboard"))
+}
+
+pub fn file() -> Option<PathBuf> {
+    Some(folder()?.join("my-words.txt"))
+}
+
+/// Adds corrections to `learned.txt`. Failing to write loses only these.
+pub fn remember(corrections: &[(String, String)]) {
+    use std::io::Write;
+    if corrections.is_empty() {
+        return;
+    }
+    let Some(folder) = folder() else {
+        return;
+    };
+    let _ = std::fs::create_dir_all(&folder);
+    let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(folder.join("learned.txt")) else {
+        return;
+    };
+    let lines: String = corrections.iter().map(|(spelling, word)| format!("{spelling} = {word}\n")).collect();
+    let _ = file.write_all(lines.as_bytes());
 }
 
 /// Reads the file again if it changed since it was last read, or was
@@ -58,13 +84,30 @@ pub fn editor() -> Option<PathBuf> {
     editor.is_file().then_some(editor)
 }
 
-/// Opens the editor, ready to add `spelling`.
-pub fn open_editor(spelling: &str) -> bool {
+/// What the editor opens for.
+pub enum Request {
+    /// "Add my word": to add `spelling`.
+    Add { spelling: String },
+    /// "Wrong word?": the user typed `typed` and the keyboard gave `got`;
+    /// `spelling` is the word they most likely mean.
+    Report { spelling: String, typed: String, got: String },
+}
+
+/// Keeps only what belongs in each value, so nothing else reaches the
+/// command line: Latin letters and spaces, or Khmer.
+fn letters(text: &str) -> String {
+    text.chars().filter(|c| c.is_ascii_alphabetic() || *c == ' ').collect::<String>().trim().to_string()
+}
+
+fn khmer(text: &str) -> String {
+    text.chars().filter(|c| ('\u{1780}'..='\u{17FF}').contains(c) || c.is_ascii_alphabetic() || *c == ' ').collect()
+}
+
+/// Opens the editor.
+pub fn open_editor(request: &Request) -> bool {
     let Some(editor) = editor() else {
         return false;
     };
-    // Only letters reach the command line.
-    let spelling: String = spelling.chars().filter(char::is_ascii_alphabetic).collect();
     let windows = std::env::var_os("SystemRoot").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("C:\\Windows"));
     let powershell = windows.join("System32\\WindowsPowerShell\\v1.0\\powershell.exe");
     let mut command = Command::new(powershell);
@@ -72,8 +115,17 @@ pub fn open_editor(spelling: &str) -> bool {
         .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File"])
         .arg(editor)
         .creation_flags(CREATE_NO_WINDOW);
-    if !spelling.is_empty() {
-        command.args(["-Spelling", &spelling]);
+    let values = match request {
+        Request::Add { spelling } => vec![("-Spelling", letters(spelling))],
+        Request::Report { spelling, typed, got } => {
+            command.arg("-Report");
+            vec![("-Spelling", letters(spelling)), ("-Typed", letters(typed)), ("-Got", khmer(got))]
+        }
+    };
+    for (name, value) in values {
+        if !value.is_empty() {
+            command.arg(name).arg(value);
+        }
     }
     command.spawn().is_ok()
 }

@@ -79,7 +79,7 @@ fn the_suggestion_window_is_drawn() {
         header: "nh jg tv".to_string(),
         items,
         highlight: 0,
-        footer: Some("Add my word".to_string()),
+        buttons: vec!["+ Add my word".to_string(), "Wrong word?".to_string()],
         hover: Some(Hit::Item(1)),
     };
 
@@ -106,7 +106,7 @@ fn clicks_find_the_row_or_the_button() {
         header: "nh".to_string(),
         items: vec!["ខ្ញុំ".to_string(), "ញ៉ាំ".to_string()],
         highlight: 0,
-        footer: Some("Add my word".to_string()),
+        buttons: vec!["+ Add my word".to_string(), "Wrong word?".to_string()],
         hover: None,
     };
     let layout = unsafe {
@@ -122,6 +122,8 @@ fn clicks_find_the_row_or_the_button() {
     let hits: Vec<_> = (0..size.cy).filter_map(|y| layout.hit(x, y)).collect();
     assert_eq!(hits.first(), Some(&Hit::Item(0)));
     assert!(hits.contains(&Hit::Item(1)));
-    assert_eq!(hits.last(), Some(&Hit::Footer));
+    assert_eq!(hits.last(), Some(&Hit::Button(0)), "the first button, under the rows");
+    let along: Vec<_> = (0..size.cx).filter_map(|x| layout.hit(x, size.cy - 8)).collect();
+    assert!(along.contains(&Hit::Button(0)) && along.contains(&Hit::Button(1)), "{along:?}");
     assert_eq!(layout.hit(x, 2), None, "the header is not a button");
 }

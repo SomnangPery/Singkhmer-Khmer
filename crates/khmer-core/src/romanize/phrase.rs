@@ -73,6 +73,30 @@ impl Phrase {
         self.select(0).unwrap_or_default()
     }
 
+    /// The words that suggestion `index` has where the top suggestion has
+    /// another, each with the spelling typed for it: what the user corrects
+    /// by picking that suggestion. Empty for the top suggestion.
+    pub(crate) fn corrections(&self, index: usize) -> Vec<(String, String)> {
+        let (Some(top), Some(chosen)) = (self.best.first(), self.best.get(index)) else {
+            return Vec::new();
+        };
+        if index == 0 {
+            return Vec::new();
+        }
+        let mut tokens = self.done.clone();
+        if !self.current.is_empty() {
+            tokens.push(self.current.clone());
+        }
+        chosen
+            .words
+            .iter()
+            .zip(&tokens)
+            .enumerate()
+            .filter(|(at, (word, _))| !word.latin && top.words.get(*at).is_some_and(|other| other.text != word.text))
+            .map(|(_, (word, token))| (token.to_ascii_lowercase(), word.text.clone()))
+            .collect()
+    }
+
     pub(crate) fn select(&mut self, index: usize) -> Option<String> {
         let sentence = self.best.get(index)?.clone();
         let text = format!("{}{}", self.lead(&sentence), sentence.text());

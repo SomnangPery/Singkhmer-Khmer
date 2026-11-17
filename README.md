@@ -8,7 +8,8 @@ nh jg tv sala rean   →   ខ្ញុំចង់ទៅសាលារៀន
 
 A keyboard for Windows 10 and 11. Suggestions show while you type, and it
 works in every app: browsers, Word, Telegram, Messenger, Notepad. Everything
-runs on your PC, with no internet and nothing sent anywhere.
+runs on your PC, with no internet. Nothing is sent anywhere unless you choose
+to [share words](#help-make-it-better).
 
 > **Early version.** It works, but some words will come out wrong. Please
 > [tell us](#help-make-it-better) when they do.
@@ -76,10 +77,13 @@ Khmer words are joined with no spaces between them, the way Khmer is written.
 
 ## Add your own words
 
-If the keyboard does not know a word, or you spell it your own way, add it:
+If the keyboard does not know a word, gives a wrong one, or you spell it your
+own way, add it:
 
 - click **+ Add my word** at the bottom of the popup (it fills in the word you
-  just typed), or
+  just typed),
+- click **Wrong word?** next to it (it also shows what you typed and what the
+  keyboard gave), or
 - open **Bunny Keyboard - My words** from the Start menu.
 
 Write the spelling and the Khmer word, then click **Add word**. From the next
@@ -129,9 +133,32 @@ too, so your PC is back to how it was.
 
 ## Help make it better
 
-When a word comes out wrong, [open an issue](https://github.com/SomnangPery/Singkhmer-Khmer/issues)
-with what you typed, what you got, and what you wanted. Each one helps fix the
-dictionary for everyone.
+The words you add, and the ones you fix, can make Bunny Keyboard better for
+everyone. To send them, open **Bunny Keyboard - My words** and the **Share**
+tab:
+
+1. It lists your own words, and the words you corrected by picking the
+   second or third suggestion instead of the first.
+2. Untick any you would rather keep to yourself, and click **Send**.
+3. A form opens in your browser with the words filled in. Check them and click
+   **Submit**. You do not need an account.
+
+You can also tick **Also send it to Bunny Keyboard** when you add a word, or
+when you use **Wrong word?**.
+
+**What is kept, and what is sent:**
+
+- When you pick a suggestion other than the first, the keyboard notes just
+  that word and its spelling (for example `tv = ធ្វើ`) in
+  `%APPDATA%\Bunny Keyboard\learned.txt` on your PC. It notes only words you
+  picked from the suggestions, never the rest of what you write.
+- Nothing leaves your PC until you click **Submit** on the form.
+- Words you send are given to the public domain (CC0), so anyone may use them,
+  in Bunny Keyboard and elsewhere. A word goes into the dictionary once
+  several people have sent the same one.
+
+You can also report a wrong word or any other problem on
+[GitHub](https://github.com/SomnangPery/Singkhmer-Khmer/issues).
 
 ---
 

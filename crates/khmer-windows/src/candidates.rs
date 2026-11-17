@@ -7,7 +7,7 @@
 //!  2  ខ្ញុំចង់ទេ
 //!  3  ខ្ញុំចង់ទិញ
 //!  ─────────────────
-//!  +  Add my word            opens the "my words" editor
+//!  + Add my word  Wrong word?   buttons that open the "my words" editor
 //! ```
 //!
 //! It follows the system's light or dark setting, has rounded corners on
@@ -166,8 +166,8 @@ pub struct View {
     pub header: String,
     pub items: Vec<String>,
     pub highlight: usize,
-    /// The text of the button at the bottom. No button when `None`.
-    pub footer: Option<String>,
+    /// The buttons along the bottom, left to right. None when empty.
+    pub buttons: Vec<String>,
     /// What the mouse is over.
     pub hover: Option<Hit>,
 }
@@ -176,7 +176,7 @@ pub struct View {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hit {
     Item(usize),
-    Footer,
+    Button(usize),
 }
 
 /// Where everything goes, in pixels from the popup's top left corner.
@@ -185,7 +185,7 @@ pub struct Layout {
     pub size: SIZE,
     header: Option<(i32, i32)>,
     rows: Vec<RECT>,
-    footer: Option<RECT>,
+    buttons: Vec<RECT>,
     dividers: Vec<i32>,
     number_left: i32,
     text_left: i32,
@@ -199,7 +199,7 @@ impl Layout {
         if let Some(index) = self.rows.iter().position(inside) {
             return Some(Hit::Item(index));
         }
-        self.footer.as_ref().filter(|rect| inside(rect)).map(|_| Hit::Footer)
+        self.buttons.iter().position(inside).map(Hit::Button)
     }
 }
 
@@ -242,8 +242,13 @@ pub fn layout(hdc: HDC, fonts: &Fonts, view: &View) -> Layout {
     for item in &view.items {
         widest = widest.max(text_left + text_size(hdc, fonts.khmer, item).cx + side);
     }
-    if let Some(footer) = &view.footer {
-        widest = widest.max(text_left + text_size(hdc, fonts.small, footer).cx + side);
+    let button_pad = px(8);
+    let button_gap = px(4);
+    let button_widths: Vec<i32> =
+        view.buttons.iter().map(|button| text_size(hdc, fonts.small, button).cx + 2 * button_pad).collect();
+    if !button_widths.is_empty() {
+        let row: i32 = button_widths.iter().sum::<i32>() + button_gap * (button_widths.len() as i32 - 1);
+        widest = widest.max(edge + row + edge);
     }
     let width = widest.max(px(180));
 
@@ -266,13 +271,17 @@ pub fn layout(hdc: HDC, fonts: &Fonts, view: &View) -> Layout {
         layout.rows.push(RECT { left: edge, top: y, right: width - edge, bottom: y + row_height });
         y += row_height;
     }
-    if view.footer.is_some() {
+    if !button_widths.is_empty() {
         y += px(3);
         layout.dividers.push(y);
         y += 1 + px(3);
-        let footer_height = small_height + px(12);
-        layout.footer = Some(RECT { left: edge, top: y, right: width - edge, bottom: y + footer_height });
-        y += footer_height;
+        let button_height = small_height + px(12);
+        let mut x = edge;
+        for button_width in button_widths {
+            layout.buttons.push(RECT { left: x, top: y, right: x + button_width, bottom: y + button_height });
+            x += button_width + button_gap;
+        }
+        y += button_height;
     }
     layout.size = SIZE { cx: width, cy: y + edge };
     layout
@@ -326,15 +335,14 @@ pub fn paint(hdc: HDC, fonts: &Fonts, theme: &Theme, layout: &Layout, view: &Vie
             text(hdc, fonts.khmer, theme.text, layout.text_left, middle - layout.khmer_height / 2, item);
         }
 
-        if let (Some(rect), Some(footer)) = (layout.footer, &view.footer) {
-            let hovered = view.hover == Some(Hit::Footer);
+        for (index, (rect, button)) in layout.buttons.iter().zip(&view.buttons).enumerate() {
+            let hovered = view.hover == Some(Hit::Button(index));
             if hovered {
-                round(hdc, rect, px(6), theme.hover);
+                round(hdc, *rect, px(6), theme.hover);
             }
             let colour = if hovered { theme.accent } else { theme.muted };
             let y = (rect.top + rect.bottom) / 2 - layout.small_height / 2;
-            text(hdc, fonts.small_bold, colour, layout.number_left, y, "+");
-            text(hdc, fonts.small, colour, layout.text_left, y, footer);
+            text(hdc, fonts.small, colour, rect.left + px(8), y, button);
         }
 
         if border {
@@ -384,7 +392,7 @@ struct Content {
     system_border: bool,
     tracking_mouse: Cell<bool>,
     on_pick: RefCell<Option<Rc<dyn Fn(usize)>>>,
-    on_footer: RefCell<Option<Rc<dyn Fn()>>>,
+    on_button: RefCell<Option<Rc<dyn Fn(usize)>>>,
 }
 
 pub struct CandidateWindow {
@@ -438,7 +446,7 @@ impl CandidateWindow {
                 system_border,
                 tracking_mouse: Cell::new(false),
                 on_pick: RefCell::new(None),
-                on_footer: RefCell::new(None),
+                on_button: RefCell::new(None),
             });
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, &*content as *const Content as isize);
             Some(CandidateWindow { hwnd, content })
@@ -449,8 +457,8 @@ impl CandidateWindow {
         *self.content.on_pick.borrow_mut() = Some(on_pick);
     }
 
-    pub fn on_footer(&mut self, on_footer: Rc<dyn Fn()>) {
-        *self.content.on_footer.borrow_mut() = Some(on_footer);
+    pub fn on_button(&mut self, on_button: Rc<dyn Fn(usize)>) {
+        *self.content.on_button.borrow_mut() = Some(on_button);
     }
 
     /// Shows `view` under `anchor`, the place of the text being typed on
@@ -592,10 +600,10 @@ unsafe extern "system" fn window_proc(hwnd: HWND, message: u32, wparam: WPARAM, 
                         on_pick(index);
                     }
                 }
-                Some(Hit::Footer) => {
-                    let on_footer = content.on_footer.borrow().clone();
-                    if let Some(on_footer) = on_footer {
-                        on_footer();
+                Some(Hit::Button(index)) => {
+                    let on_button = content.on_button.borrow().clone();
+                    if let Some(on_button) = on_button {
+                        on_button(index);
                     }
                 }
                 None => {}

@@ -24,6 +24,7 @@ pub struct Engine {
     mode: Mode,
     composer: Composer,
     phrase: Phrase,
+    corrections: Vec<(String, String)>,
 }
 
 impl Engine {
@@ -68,6 +69,14 @@ impl Engine {
         }
     }
 
+    /// Takes the corrections made since the last call: for each suggestion
+    /// picked instead of the top one, the spellings typed and the Khmer words
+    /// the user wanted for them, as (spelling, word) pairs. Only words; never
+    /// the text around them.
+    pub fn take_corrections(&mut self) -> Vec<(String, String)> {
+        std::mem::take(&mut self.corrections)
+    }
+
     pub fn candidates(&self) -> Vec<String> {
         match self.mode {
             Mode::Khmer => Vec::new(),
@@ -76,6 +85,9 @@ impl Engine {
     }
 
     pub fn select(&mut self, index: usize) -> Output {
+        if self.mode == Mode::Romanized {
+            self.corrections.extend(self.phrase.corrections(index));
+        }
         let text = match self.mode {
             Mode::Khmer => String::new(),
             Mode::Romanized => self.phrase.select(index).unwrap_or_default(),
@@ -223,6 +235,32 @@ mod tests {
         let mut engine = Engine::new();
         engine.set_mode(Mode::Romanized);
         engine
+    }
+
+    #[test]
+    fn picking_another_suggestion_records_the_words_it_corrects() {
+        let mut engine = romanized();
+        for key in "nh jg tv".chars() {
+            engine.on_key(key);
+        }
+        let suggestions = engine.candidates();
+        let top = suggestions[0].clone();
+        let other = suggestions.iter().position(|s| *s != top).expect("a second suggestion");
+
+        engine.select(other);
+        let corrections = engine.take_corrections();
+        assert!(!corrections.is_empty(), "{suggestions:?}");
+        for (spelling, word) in &corrections {
+            assert!(["nh", "jg", "tv"].contains(&spelling.as_str()), "{spelling}");
+            assert!(suggestions[other].contains(word.as_str()), "{word}");
+        }
+        assert!(engine.take_corrections().is_empty(), "taken once");
+
+        for key in "nh jg tv".chars() {
+            engine.on_key(key);
+        }
+        engine.select(0);
+        assert!(engine.take_corrections().is_empty(), "the top suggestion corrects nothing");
     }
 
     #[test]
