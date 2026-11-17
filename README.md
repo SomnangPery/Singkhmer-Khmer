@@ -19,7 +19,7 @@ Open **Command Prompt** or **PowerShell** (press Windows, type `cmd`, press
 Enter), paste this line and press Enter:
 
 ```
-powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex"
+powershell -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex"
 ```
 
 Windows asks for permission to change your PC: click **Yes**. That is all.
@@ -98,11 +98,9 @@ They stay on your PC when the keyboard is updated or removed.
 
 To update, run the install line again.
 
-To remove the keyboard, paste this into Command Prompt or PowerShell:
-
-```
-powershell -ep bypass -c "& ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove"
-```
+To remove it, open **Settings → Apps → Installed apps**, find **Bunny
+Keyboard**, click **⋯** and **Uninstall**. Windows asks for permission once,
+and a message says when it is done.
 
 If Khmer was in your language list only for Bunny Keyboard, it is taken off
 too, so your PC is back to how it was.
@@ -112,10 +110,12 @@ too, so your PC is back to how it was.
 - **The first word takes a moment.** The first time you use Singkhmer in an
   app, it reads its dictionary of about 120,000 words, which takes about a
   second.
-- **Antivirus warnings.** The keyboard is new and not signed, so some antivirus
-  programs may warn about it.
+- **"Access is denied" or an antivirus warning when you install?** The
+  keyboard is new and not signed, and a line that downloads and runs a script
+  looks suspicious to antivirus programs, Microsoft Defender included. Check
+  that you copied the install line exactly as it is above, with nothing added.
 - **An app closes while you type?** Press Windows + Space to switch to another
-  keyboard and run the remove line above, then
+  keyboard and uninstall Bunny Keyboard in Settings, then
   [tell us](#help-make-it-better) which app it was.
 - **32-bit apps** (a few old programs) do not offer the keyboard yet.
 

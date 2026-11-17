@@ -3,7 +3,11 @@ param(
     [string]$Dll,
     [string]$InstallDir = (Join-Path $env:ProgramFiles 'Bunny Keyboard'),
     [switch]$AsAdmin,
-    [string]$Log
+    [string]$Log,
+    # Set by the Uninstall button in Settings: there is no console to read,
+    # so the result is shown in a message box.
+    [switch]$FromSettings,
+    [string]$Version
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,6 +33,13 @@ $Shortcut = Join-Path $StartMenu 'Bunny Keyboard - My words.lnk'
 $OldInstallDir = Join-Path $env:ProgramFiles 'Khmer Keyboard'
 $OldShortcut = Join-Path $StartMenu 'Khmer Keyboard - My words.lnk'
 $Regsvr32 = Join-Path $env:windir 'System32\regsvr32.exe'
+$PowerShellExe = Join-Path $env:windir 'System32\WindowsPowerShell\v1.0\powershell.exe'
+
+# The entry under Settings -> Apps -> Installed apps, whose Uninstall button
+# runs a copy of this script. The release build writes the version in here.
+if (-not $Version) { $Version = 'dev' }
+$AppKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BunnyKeyboard'
+$UninstallerName = 'uninstall.ps1'
 
 function Test-Administrator {
     $me = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
@@ -71,8 +82,33 @@ function Install-AsAdmin {
         throw "Windows did not accept the keyboard (regsvr32 gave error $code). Nothing was registered."
     }
     Install-Editor
+    Register-App
     Remove-OldName
     "Installed $installed"
+}
+
+function Register-App {
+    $uninstaller = Join-Path $InstallDir $UninstallerName
+    Copy-Item $PSCommandPath $uninstaller -Force
+    New-Item -Path $AppKey -Force | Out-Null
+    $dll = Get-Item (Join-Path $InstallDir $DllName)
+    $values = @{
+        DisplayName     = 'Bunny Keyboard'
+        DisplayVersion  = $Version
+        Publisher       = 'Bunny Keyboard'
+        InstallLocation = $InstallDir
+        DisplayIcon     = (Join-Path $env:windir 'System32\input.dll') + ',0'
+        URLInfoAbout    = 'https://github.com/SomnangPery/Singkhmer-Khmer'
+        UninstallString = "`"$PowerShellExe`" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$uninstaller`" -Remove -FromSettings"
+    }
+    foreach ($name in $values.Keys) {
+        Set-ItemProperty -Path $AppKey -Name $name -Value $values[$name]
+    }
+    foreach ($name in 'NoModify', 'NoRepair') {
+        New-ItemProperty -Path $AppKey -Name $name -Value 1 -PropertyType DWord -Force | Out-Null
+    }
+    New-ItemProperty -Path $AppKey -Name 'EstimatedSize' -Value ([int]($dll.Length / 1KB)) -PropertyType DWord -Force | Out-Null
+    "Added Bunny Keyboard to Settings -> Apps -> Installed apps"
 }
 
 # The "my words" editor, and a Start menu entry for it. The keyboard finds the
@@ -117,6 +153,13 @@ function Remove-Editor {
     if (Test-Path $installed) { Remove-Item $installed -Force }
 }
 
+function Remove-App {
+    if (Test-Path $AppKey) { Remove-Item $AppKey -Recurse -Force }
+    # PowerShell has read the whole script, so it can delete its own file.
+    $uninstaller = Join-Path $InstallDir $UninstallerName
+    if (Test-Path $uninstaller) { Remove-Item $uninstaller -Force }
+}
+
 function Remove-AsAdmin {
     $installed = Join-Path $InstallDir $DllName
     $old = Join-Path $OldInstallDir $DllName
@@ -132,6 +175,7 @@ function Remove-AsAdmin {
         Clear-InstalledDll
     }
     Remove-Editor
+    Remove-App
     Remove-OldName
     Remove-OldCopies
     if ((Test-Path $InstallDir) -and -not (Get-ChildItem $InstallDir -Force)) {
@@ -158,7 +202,7 @@ if ($AsAdmin) {
 
 function Invoke-AdminPart([string[]]$Arguments) {
     $log = Join-Path $env:TEMP ("khmer-keyboard-{0}.log" -f [Guid]::NewGuid().ToString('N'))
-    $all = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-AsAdmin',
+    $all = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-AsAdmin', '-Version', $Version,
         '-InstallDir', "`"$InstallDir`"", '-Log', "`"$log`"") + $Arguments
     $start = @{
         FilePath     = (Get-Process -Id $PID).Path
@@ -241,11 +285,19 @@ function Set-Keyboards([bool]$Present) {
     $changed
 }
 
+function Show-Box([string]$Text, [string]$Kind) {
+    Add-Type -AssemblyName System.Windows.Forms
+    [void][System.Windows.Forms.MessageBox]::Show($Text, 'Bunny Keyboard', 'OK', $Kind)
+}
+
 try {
     if ($Remove) {
         [void](Set-Keyboards $false)
         Invoke-AdminPart @('-Remove')
         Write-Host "Bunny Keyboard is removed."
+        if ($FromSettings) {
+            Show-Box "Bunny Keyboard is removed.`n`nApps that were open while it was in use let go of it when they are restarted." 'Information'
+        }
     } else {
         if (-not [Environment]::Is64BitOperatingSystem) { throw "This keyboard is built for 64-bit Windows only." }
         if (-not $Dll) { $Dll = Get-BuiltDll }
@@ -259,5 +311,6 @@ try {
     }
 } catch {
     Write-Host "Not done: $_" -ForegroundColor Red
+    if ($FromSettings) { Show-Box "Bunny Keyboard was not removed: $_" 'Warning' }
     exit 1
 }

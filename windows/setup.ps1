@@ -1,11 +1,14 @@
 # Installs Bunny Keyboard (Singkhmer) on this PC straight from GitHub, with no Rust
-# and no copy of the project. In Windows PowerShell:
+# and no copy of the project. In Command Prompt or PowerShell:
 #
-#   irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex
+#   powershell -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex"
 #
-# To remove it again:
+# Keep "-ExecutionPolicy Bypass" (-ep bypass) out of that line: it is not
+# needed for `iex`, and Microsoft Defender blocks a download-and-run command
+# that has it as Trojan:Win32/Commando.C!ml.
 #
-#   & ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove
+# To remove the keyboard: Settings -> Apps -> Installed apps -> Bunny Keyboard
+# -> Uninstall. (This file still takes -Remove, for scripts.)
 #
 # This file is run with `iex`, inside the user's own PowerShell window, so it
 # never calls `exit` (that would close the window). It only downloads the two

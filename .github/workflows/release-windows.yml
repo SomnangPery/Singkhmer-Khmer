@@ -28,6 +28,15 @@ jobs:
       - name: Build khmer_tsf.dll
         run: cargo build --release --locked -p khmer-windows
 
+      - name: Write the version into install.ps1
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          $script = Get-Content windows/install.ps1 -Raw
+          $marked = "`$Version = 'dev'"
+          if (-not $script.Contains($marked)) { throw "install.ps1 has no $marked to replace" }
+          $script.Replace($marked, "`$Version = '$version'") | Set-Content windows/install.ps1 -NoNewline -Encoding utf8NoBOM
+
       - name: Put it on the release
         shell: pwsh
         run: |

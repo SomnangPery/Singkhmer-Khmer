@@ -262,7 +262,7 @@ On any 64-bit Windows 10 or 11 PC, with no Rust and no copy of the project,
 paste this into any window: Command Prompt, PowerShell, Windows Terminal, or the Run box (Windows+R):
 
 ```
-powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex"
+powershell -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex"
 ```
 
 (In PowerShell the short form also works:
@@ -270,11 +270,18 @@ powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/rel
 
 It downloads the keyboard from the latest release and runs `install.ps1` on
 it. Windows asks for administrator permission once. Then press Windows+Space:
-"Singkhmer (Bunny Keyboard)" is listed under Khmer. To take it off again:
+"Singkhmer (Bunny Keyboard)" is listed under Khmer.
 
-```
-powershell -ep bypass -c "& ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove"
-```
+Do not add `-ep bypass` (`-ExecutionPolicy Bypass`) to that line: `iex` does
+not need it, and Microsoft Defender blocks a download-and-run command that has
+it, as Trojan:Win32/Commando.C!ml. The user sees only "Access is denied."
+
+The installer also adds **Bunny Keyboard** to Settings → Apps → Installed apps
+(`HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BunnyKeyboard`).
+Its Uninstall button runs a copy of `install.ps1` kept as
+`C:\Program Files\Bunny Keyboard\uninstall.ps1`, with `-Remove -FromSettings`,
+which reports the result in a message box. The release workflow writes the
+tag's version into `install.ps1` (`$Version = 'dev'`) for that entry.
 
 A release is made by pushing a tag (`git tag v0.1.0`, then
 `git push origin v0.1.0`): `.github/workflows/release-windows.yml` builds
