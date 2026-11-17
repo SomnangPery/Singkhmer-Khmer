@@ -1,0 +1,131 @@
+# Test cases for khmer-core, one per line, tab-separated:
+#
+#   kind <TAB> input code points <TAB> expected <TAB> note
+#
+# kind = normalize : normalize(input) must equal the expected code points
+# kind = valid     : is_valid(input) must be "yes" or "no"
+# kind = type      : typing the input keys in Khmer mode must commit the expected code points
+#                    (0008 = backspace)
+#
+# Code points are written in hex so that the storage order is visible; two strings
+# that look the same on screen can be stored differently, which is the whole problem.
+# Add every piece of real broken text you find as a new "normalize" line.
+
+# --- subscripts go before the vowel; coeng ro goes last; coeng da is stored as coeng ta
+normalize	179F 17D2 178F 17D2 179A 17B8	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី already correct
+normalize	179F 17B8 17D2 179A 17D2 178F	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី typed vowel, coeng ro, coeng ta (design doc example)
+normalize	179F 17D2 179A 17D2 178F 17B8	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី coeng ro first (the most common wrong form)
+normalize	179F 17D2 178A 17D2 179A 17B8	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី with coeng da
+normalize	179F 17D2 179A 17D2 178A 17B8	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី coeng ro first, coeng da
+normalize	179F 17D2 179A 17B8 17D2 178F	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី coeng ro, vowel, coeng ta
+normalize	179F 17D2 178F 17B8 17D2 179A	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី coeng ta, vowel, coeng ro
+normalize	179F 17B8 17D2 178F 17D2 179A	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី vowel first
+normalize	1781 17BB 17C6 17D2 1789	1781 17D2 1789 17BB 17C6	ខ្ញុំ subscript typed last
+normalize	179F 1784 17D2 1782 17D2 179A 17B6 1798	179F 1784 17D2 1782 17D2 179A 17B6 1798	សង្គ្រាម already correct
+normalize	1780 17D2 179A 17D2 1780 17D2 1781	1780 17D2 1780 17D2 1781 17D2 179A	three subscripts: coeng ro still goes last
+normalize	1780 17D2 179A 17D2 179A	1780 17D2 179A 17D2 179A	two coeng ro: nothing to reorder
+normalize	1780 17D2 17D2 178F	1780 17D2 178F	doubled coeng sign collapses to one
+
+# --- the consonant shifter goes after the subscripts
+normalize	1798 17C9 17D2 1799 17B6 1784	1798 17D2 1799 17C9 17B6 1784	ម៉្យាង shifter typed before the subscript
+normalize	179F 17B8 17CA	179F 17CA 17B8	ស៊ី vowel typed before the shifter
+normalize	179F 200C 17CA 17B8	179F 17CA 200C 17B8	ZWNJ goes after the shifter it holds up
+
+# --- robat goes straight after the base; vowel before signs; signs before finals
+normalize	1780 17B6 17CC	1780 17CC 17B6	robat typed after the vowel
+normalize	1780 17C6 17BB	1780 17BB 17C6	កុំ sign typed before the vowel
+normalize	1785 17C6 17B6	1785 17B6 17C6	ចាំ nikahit typed before aa
+normalize	1780 17C7 17C6	1780 17C6 17C7	final (reahmuk) typed before the sign
+
+# --- lookalike vowels: two parts that look like one vowel become that vowel
+normalize	1780 17C1 17B6	1780 17C4	េ + ា looks like ោ
+normalize	1780 17B6 17C1	1780 17C4	ា + េ looks like ោ
+normalize	179F 17CA 17C1 17B8 1794	179F 17CA 17BE 1794	ស៊ើប with េ + ី for ើ
+normalize	1780 17C1 17C1	1780 17C2	េ + េ looks like ែ (our own rule, not in UTN #61)
+
+# --- lookalike shifter: -u drawn under an above vowel is really a shifter
+normalize	179F 17BB 17B8	179F 17CA 17B8	ស៊ី typed with ុ (strong consonant: triisap)
+normalize	179F 17B8 17BB	179F 17CA 17B8	ស៊ី typed ី then ុ
+normalize	17A2 17BB 17B8	17A2 17CA 17B8	អ៊ី typed with ុ
+normalize	1798 17BB 17BA 1793	1798 17C9 17BA 1793	ម៉ឺន typed with ុ (weak consonant: muusikatoan)
+normalize	1794 17BB 17B7 1793	1794 17C9 17B7 1793	ប៉ិន typed with ុ (ba always takes muusikatoan)
+normalize	179F 17BE 17BB 1794	179F 17CA 17BE 1794	ស៊ើប typed ើ then ុ
+normalize	179F 17C1 17B8 17BB 1794	179F 17CA 17BE 1794	ស៊ើប typed េ ី ុ
+normalize	179F 17BB 17C1 17B8 1794	179F 17CA 17BE 1794	ស៊ើប typed ុ េ ី
+normalize	1789 17BB 17B6 17C6	1789 17C9 17B6 17C6	ញ៉ាំ typed with ុ
+normalize	179F 17BB 17B6 17C6	179F 17CA 17B6 17C6	ស៊ាំ typed with ុ
+normalize	1794 17BB 17D0 1784	1794 17C9 17D0 1784	ប៉័ង typed with ុ
+normalize	1794 17D0 17BB 1784	1794 17C9 17D0 1784	ប៉័ង typed ័ then ុ
+
+# --- things the normalizer must leave alone
+normalize	1780 17BB 17B6	1780 17BB 17B6	two real vowels: not ours to guess, left for the validator
+normalize	179F 17CA 17BB 17B8	179F 17CA 17BB 17B8	already has a shifter: the ុ is left alone
+normalize	1780 17D2 17B6	1780 17D2 17B6	coeng sign with no consonant after it
+normalize	17D2 1780 17B6	17D2 1780 17B6	subscript with no base before it
+normalize	17B6 1780	17B6 1780	vowel with no base before it
+normalize	1780 17B6 200C 1781	1780 17B6 200C 1781	ZWNJ that is not next to a shifter
+normalize	0061 0062	0061 0062	Latin text
+normalize	0061 1780 17C6 17BB 0020	0061 1780 17BB 17C6 0020	Khmer between other characters
+
+# --- deprecated letters
+normalize	17A3	17A2	deprecated ឣ becomes អ
+normalize	17A4	17A2 17B6	deprecated ឤ becomes អា
+
+# --- validator: follows the Modern Khmer structure of UTN #61
+valid	179F 17D2 178F 17D2 179A 17B8	yes	ស្ត្រី
+valid	179F 17B8 17D2 179A	no	subscript after the vowel
+valid	179F 17D2 179A 17D2 178F 17B8	no	coeng ro before another subscript
+valid	1798 17C9 17D2 1799 17B6	no	shifter before the subscript
+valid	1798 17D2 1799 17C9 17B6 1784	yes	ម៉្យាង
+valid	1780 17C1 17B8	no	two vowels
+valid	179F 17BB 17B8	no	two vowels (ុ under ី)
+valid	1780 17BB 17C6	yes	កុំ
+valid	1780 17C6 17BB	no	sign before the vowel
+valid	1794 17BB 17D0	no	samyok sannya straight after ុ
+valid	1794 17C9 17D0 1784	yes	ប៉័ង
+valid	17B6	no	vowel with no base
+valid	17D2 1780	no	subscript with no base
+valid	1780 17D2	no	coeng sign with no consonant
+valid	1780 17CC 17B6	yes	robat then vowel
+valid	1780 17B6 17CC	no	robat after the vowel
+valid	179F 17CA 200C 17B8	yes	ZWNJ holding up a triisap that would drop
+valid	1794 17CA 200C 17B8	no	ZWNJ after a triisap that would not drop anyway
+valid	1794 17C9 200C 17B7	yes	ZWNJ holding up a muusikatoan on ba
+valid	179F 17C9 200C 17B8	no	ZWNJ after a muusikatoan that would not drop anyway
+valid	179F 17CA 200C 17B6	no	ZWNJ before a vowel that does not push the shifter down
+valid	179F 17CA 200C 17B6 17C6	yes	ZWNJ before ាំ
+valid	1798 17C9 200C 17D0	yes	ZWNJ before samyok sannya on a weak consonant
+valid	1780 17D2 1781 17D2 1782 17D2 1783	no	three subscripts
+valid	1780 17C6 17CB	yes	two signs
+valid	1780 17C6 17CB 17CD	no	three signs
+valid	1780 17C7 17C8	no	two finals
+valid	1780 17C9 17CA	no	two shifters
+valid	17B1 17D2 1799	yes	ឱ្យ
+valid	0041 0020 17E1 17D4	yes	Latin, space, Khmer digit and punctuation
+
+# --- typing in Khmer mode
+type	179F 17D2 178F 17D2 179A 17B8	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី typed in order
+type	179F 17B8 17D2 179A 17D2 178F	179F 17D2 178F 17D2 179A 17B8	ស្ត្រី typed vowel first
+type	179F 17D2 178A 17B6 1794 17CB	179F 17D2 178F 17B6 1794 17CB	ស្តាប់ typed with coeng da
+type	1780 17B6 17B8	1780 17B8	a second vowel replaces the first
+type	1780 17C1 17B8	1780 17BE	េ then ី becomes ើ
+type	1780 17B6 17C1	1780 17C4	ា then េ becomes ោ
+type	179F 17BB 17B8	179F 17CA 17B8	ស៊ី typed with ុ
+type	1789 17BB 17B6 17C6	1789 17C9 17B6 17C6	ញ៉ាំ typed ុ ា ំ
+type	179F 17B6 17C6 17BB	179F 17CA 17B6 17C6	ស៊ាំ typed ា ំ ុ
+type	179F 17BB 17B6	179F 17B6	ុ then ា with no nikahit: ា replaces ុ
+type	179F 17B6 17BB	179F 17BB	ា then ុ: ុ replaces ា
+type	17D2 1780	1780	coeng sign with no base is ignored
+type	17B6 1780	1780	vowel with no base is ignored
+type	1780 17D2 17B6	1780 17B6	coeng sign followed by a vowel: the coeng sign is dropped
+type	1780 17D2	1780	coeng sign left hanging at the end is dropped
+type	1780 17D2 1781 17D2 1782 17D2 1783	1780 17D2 1781 17D2 1782	a third subscript is ignored
+type	179F 17D2 179A 17D2 179A	179F 17D2 179A	a second coeng ro is ignored
+type	1780 17C6 17C6	1780 17C6	a repeated sign is dropped
+type	1780 17C9 17CA	1780 17CA	a second shifter replaces the first
+type	179F 17CA 200C 17B8	179F 17CA 200C 17B8	ZWNJ kept where it changes how the shifter is drawn
+type	1794 17CA 200C 17B8	1794 17CA 17B8	ZWNJ dropped where it would change nothing
+type	1780 1781	1780 1781	a new consonant starts a new syllable
+type	1780 17B6 0020 1781	1780 17B6 0020 1781	space ends the syllable
+type	1780 17B6 0008 17B8	1780 17B8	backspace undoes the last key
+type	17A4	17A2 17B6	deprecated ឤ comes out as អា

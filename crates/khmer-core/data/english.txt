@@ -1,0 +1,96 @@
+# English words that stay in Latin letters in romanized mode.
+#
+# One word per line. A word here is kept as typed unless words.tsv lists
+# exactly that spelling for a Khmer word. Keep this list to words people
+# really leave in English inside Khmer messages: brand names, tech words,
+# short chat words. A full English dictionary would make Khmer harder to type.
+
+# --- chat words ---
+ok
+okay
+hi
+hello
+bye
+yes
+no
+sorry
+thanks
+thank
+please
+love
+haha
+hahaha
+hehe
+lol
+omg
+wow
+cute
+cool
+nice
+good
+happy
+birthday
+morning
+night
+
+# --- apps and brands ---
+facebook
+fb
+messenger
+telegram
+tiktok
+youtube
+google
+instagram
+ig
+whatsapp
+line
+zoom
+gmail
+email
+netflix
+iphone
+samsung
+android
+apple
+aba
+wing
+grab
+
+# --- tech words ---
+wifi
+internet
+online
+offline
+video
+call
+like
+share
+comment
+post
+live
+page
+group
+link
+app
+phone
+computer
+laptop
+game
+password
+account
+login
+logout
+download
+upload
+update
+file
+photo
+story
+profile
+admin
+sim
+data
+qr
+pdf
+tv

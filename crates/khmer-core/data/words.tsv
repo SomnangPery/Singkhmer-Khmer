@@ -1,0 +1,842 @@
+# Romanization dictionary: Khmer word, how common, spellings, meaning.
+#
+# Columns are separated by one TAB character:
+#   1. the Khmer word
+#   2. how common it is: a rough count per million words
+#   3. the ways people spell it in Latin letters, most usual first, with commas
+#   4. the meaning in English (only for people reading this file)
+#
+# The counts and spellings are a first draft written by hand, not counted from
+# real text. Correct them freely: a line that breaks a rule is reported by
+# `cargo test` with its line number.
+#
+# Spelling variants made by rule (kh/k, ch/j, ou/o/u, ea/ia, doubled letters)
+# are matched automatically and do not need to be listed.
+
+# --- people and pronouns ---
+ខ្ញុំ	9000	nh, knhom, khnhom, knyom, khnom, kyom	I, me
+អ្នក	5000	neak, nak, nek	you, person
+គាត់	3000	kot, koat, kat, kort	he, she
+គេ	3000	ke, kae, kee	they, he, she
+យើង	4000	yg, yerng, yeung, yeng, yoeung	we
+ពួក	1500	puk, pouk, puok	group
+បង	4000	bong, b, bang, bg	older sibling, you
+អូន	3000	oun, o, own, on, aun	younger one, dear
+ប្អូន	1500	paoun, poun, baoun, pon	younger sibling
+ឯង	2500	eng, aeng, ng	you (informal)
+ហែង	600	hg, heng, haeng, haing	you (rough)
+អញ	900	anh, agn, anj	I (rough)
+វា	3000	vea, via, va	it
+ខ្លួន	1500	kloun, khloun, klun, khluon	self, body
+ខ្លួនឯង	800	klouneng, khlouneng, kluneng	oneself
+មនុស្ស	2000	mnus, monus, mnous, menus, mnuh	human, people
+គ្រួសារ	900	krousa, kruosa, krusar, kruosar	family
+ម៉ែ	1200	mae, me, mea	mom
+ម៉ាក់	900	mak, mack, mark	mom
+ប៉ា	1200	pa, paa, par	dad
+ពុក	500	pok, puk	father
+ម្តាយ	800	mday, mdai, madai, mdaay	mother
+ឪពុក	800	ovpuk, aopuk, oupuk, ovpok	father
+ឪពុកម្តាយ	600	ovpukmday, aopukmdai, ovpokmday	parents
+កូន	2500	kon, koun, kaun, kn	child
+ប្រុស	1500	pros, bros, pro, proh, bro	male
+ស្រី	1800	srey, srei, sray, sri	female
+ប្តី	800	pdey, bdey, pdei, bdei	husband
+ប្រពន្ធ	800	prapon, propun, propon, brapun	wife
+សង្សារ	1200	songsa, sangsa, songsar, ss	boyfriend, girlfriend
+មិត្ត	800	mit, mitt, met	friend
+មិត្តភក្តិ	800	mitpheak, mitpeak, mitphek, metpheak	friends
+បងប្អូន	1000	bongpaoun, bongbaoun, bongpoun, bgpaoun	siblings, relatives
+ពូ	800	pu, pou, poo	uncle
+មីង	800	ming, meng, mign	aunt
+តា	700	ta, taa	grandpa
+យាយ	800	yeay, yay, yiey	grandma
+ជីតា	300	jita, chita, jeeta	grandfather
+ជីដូន	300	jidon, chidoun, jidoun	grandmother
+ក្មួយ	500	kmuoy, kmouy, khmuoy, kmuy	nephew, niece
+គ្រូ	1200	kru, krou, kroo	teacher
+សិស្ស	700	sis, seus, ses, sirs	student
+ក្មេង	900	kmeng, kmeing, khmeng	kid, young
+ចាស់	700	jas, chas, jah, chah	old
+លោក	1500	lok, louk, lork	mister, sir
+នរណា	700	nona, norna, nornar, nrna	who
+អ្នកណា	600	neakna, nakna, nekna	who
+ថៅកែ	800	thavke, thaokae, tavke, taokae, towkay	boss
+បុគ្គលិក	600	bokkolik, bukalik, bokalek, bokkalek	staff
+អតិថិជន	500	atethejon, atithichon, atetejon, atitijun	customer
+ពេទ្យ	1200	pet, paet, peit, ped	doctor
+ប៉ូលិស	800	polis, bolis, poulis, polih	police
+ពួកម៉ាក	500	pukmak, poukmak, puokmak	buddies
+
+# --- small words ---
+អី	5000	ey, ei, ay, ai, eiy	what
+អ្វី	2500	avey, avei, ovey, ahvey	what
+ទេ	9000	te, tae, teh, t	no, (question)
+អត់	6000	ot, ort, at, ad, od, art	not, no
+មិន	5000	min, mun, mn, mern	not
+កុំ	2500	kom, kum, koum	don't
+ហើយ	8000	hz, hery, hey, haey, hx, hoy, heuy, houy, h	already, and
+នឹង	5000	nung, neng, ning, nerng	will, with
+ហ្នឹង	3500	ng, nung, neng, ning, hnung	that, that one
+នៅ	7000	nv, nov, nau, now, nao, nouv	at, still
+ទៅ	8000	tv, tov, tow, tau, tao	go
+មក	6000	mk, mok, mork, mouk	come
+បាន	9000	ban, barn, bn	can, got
+មាន	9000	mean, mian, mien	have
+ជា	8000	jea, chea, jia, ja, chia	be
+គឺ	3000	ku, keu, kue, ker, kir	is
+ដែរ	4000	der, dae, de, daer, dea	also
+ផង	2500	phong, pong, pg, phorng	too, please
+ដែល	5000	del, dael, dail, dl	that, which, ever
+ថា	7000	tha, ta, thar, tah	say, that
+ណា	3000	na, nar, naa	which, where
+ណាស់	3500	nas, nah, nass, nahs	very
+មែន	2500	men, mean, maen	true, really
+មែនទែន	1200	mentaen, menten, maentaen, mt	really
+អញ្ចឹង	2500	anjeng, onjeng, anjerng, ajeng, anjung, ancheng	so, like that
+ចឹង	2500	jeng, jerng, jung, cheng	like that
+អីចឹង	800	eyjeng, eijeng, eyjerng	like that
+ម៉េច	2000	mej, mech, mich, mek	how, why
+យ៉ាងម៉េច	800	yangmej, yangmech, yangmek	how
+ហេតុអី	900	hetey, haetey, hetei, hetay	why
+ហេតុអ្វី	700	hetavey, haetavey, hetavei	why
+ហេតុ	900	het, haet, hetu, hait	reason
+ព្រោះ	1800	pros, proh, pruos, prous, bros	because
+ពីព្រោះ	900	pipros, piproh, pipruos	because
+ដោយសារ	900	doysa, daoysa, doysar	because of
+ប៉ុន្តែ	1500	ponte, pontae, bonte, punte, bontae	but
+តែ	4000	te, tae, ter	but, only, tea
+ប៉ុន្មាន	1500	ponman, punman, bonman, pmn, ponmarn	how many
+ប៉ុណ្ណឹង	900	ponneng, ponnung, punneng, bonneng	this much
+ប៉ុណ្ណោះ	700	ponnos, punnoh, bonnos, ponnoh	only
+ពេល	3000	pel, pael, peal	time, when
+ពេលណា	800	pelna, pelnar, paelna	when
+ឯណា	1200	ena, aena, enar	where
+បើ	3500	ber, bae, be, baer, beu	if
+បើសិន	700	bersen, baesen, bersin	if
+ប្រសិនបើ	600	brosenber, prasenbae, brosinber, prosenber	if
+ក៏	5000	kor, ko, kr, k	also
+និង	6000	ning, neng, nung, nerng, n	and
+ឬ	2500	reu, rue, ru, rer, r	or
+តើ	1500	ter, taer, teu, toe	(question word)
+ដើម្បី	2000	dermbey, daembey, dembey, dermbei, dombey	in order to
+ពី	6000	pi, pe, py, pii	from, about
+ដល់	3500	dol, dal, dorl	to, arrive
+ក្នុង	4000	knong, khnong, knung, knog	in
+លើ	3500	ler, leu, loe, lerr	on
+ក្រោម	1200	krom, kraom, krorm	under
+ក្រៅ	1200	krav, krao, krau, krov	outside
+ជាមួយ	3500	jeamuy, jeamouy, jmuy, jiamuy, cheamuy, jeamoy	with
+ជាមួយគ្នា	900	jeamuyknea, jeamouyknia, jmuyknea, jeamuykea	together
+ដោយ	3500	doy, daoy, doi, dauy	by
+សម្រាប់	2500	somrab, samrab, somrap, sombrab, samrap	for
+ឱ្យ	4500	oy, aoy, ouy, oi, ory	give, let
+ឲ្យ	1500	oy, aoy, ouy, oi	give, let (older spelling)
+របស់	3500	robos, ropos, robors, rbos, rorbos, rabos	of, thing
+ទៀត	3500	tiet, teat, tet, tiat, tt	more, again
+ដូច	3000	doj, doch, douch, dauj, dooch	like, as
+ដូចជា	1500	dojjea, dochjea, doujjea, dochchea	such as, seems
+ដូចគ្នា	1200	dojknea, dochknea, dojknia, dojkea	same
+ដូច្នេះ	1200	dojnes, dochneh, dojnis, dauchnes, dochnih	therefore
+ប្រហែល	1500	prohel, brohel, prahel, prohael, brahael	maybe, about
+ប្រហែលជា	800	proheljea, prohelja, brohaeljea, prohaeljea	maybe
+ប្រាកដ	800	prakod, brakod, prakot, brakot	sure
+ច្បាស់	1200	jbas, chbas, jbah, jbass, chbah	clear
+ច្បាស់ជា	600	jbasjea, chbaschea, jbahjea	surely
+ពិត	2000	pit, pet, pith, pid	true
+ពិតជា	1200	pitjea, petjea, pitchea, pitja	really
+វិញ	3000	vinh, venh, vin, ving, vign	back, instead
+សិន	2500	sen, sin, sern, sn	first, for now
+ចុះ	2000	jos, joh, chos, choh, jus	down, how about
+ឡើង	2000	lerng, laeng, leung, loeng	up
+ពេក	1800	pek, paek, peik, pk	too (much)
+ម្ល៉េះ	700	mles, mleh, mlaes, mlehs	so (much)
+សោះ	1200	sos, soh, saos, sors	at all
+អើ	800	er, aer, eu, err	yeah
+អូ	600	o, oh, oo	oh
+សូម្បី	500	sombey, sumbey, soumbei, sombei	even
+សូម្បីតែ	400	sombeyte, sumbeytae, sombeytae	even
+ទោះ	600	tos, toh, tuos, tous	even though
+ទោះបី	500	tosbey, tohbei, tuosbey	although
+ទោះជា	400	tosjea, tohjea, tuoschea	even if
+ករណី	500	koroney, karanei, koronei, korney	case
+គ្រាន់តែ	900	kroante, kroantae, krantae, kronte	just, only
+តែម្តង	900	temdong, taemdong, temdang	at once, totally
+នេះ	8000	nis, nih, nes, neh, nix	this
+នោះ	5000	nus, nuh, nos, noh, nous	that
+ទី	2500	ti, tee, ty	place, number
+ទីនេះ	1500	tinis, tinih, tines, teenis	here
+ទីនោះ	1000	tinus, tinuh, tinos, tinoh	there
+គ្នា	3000	knea, knia, khnea, kea, kia	each other, together
+ម្នាក់	2000	mneak, mnak, maneak, mnek	one person
+ម្នាក់ឯង	1200	mneakeng, mnakeng, maneakeng	alone
+នាក់	2500	neak, nak, nek	(counts people)
+យ៉ាង	2000	yang, yarng, yaang	kind, way
+បែប	1200	beb, baeb, bep, baep	style, kind
+បែបនេះ	700	bebnis, baebnih, bebnih, baepnis	like this
+បែបណា	500	bebna, baebna, bepna	what kind
+ណាមួយ	600	namuy, namouy, narmuy, namoy	any
+អ្វីមួយ	500	aveymuy, aveimouy, aveymoy	something
+គ្រប់យ៉ាង	800	krubyang, krobyang, krupyang	everything
+ធ្វើអី	1200	tverey, thverei, tveuey, tverei	doing what
+ធ្វើម៉េច	700	tvermej, thvermech, tvermech	what to do
+ម៉េចក៏	500	mejkor, mechko, mejko	why
+ទៅណា	1200	tvna, tovna, tovnar, tvnar	going where
+នៅណា	1000	nvna, novna, novnar, nauna	where
+រឿងអី	800	rerngey, reungey, rgey, roeungei	what's the matter
+កើតអី	600	kertey, kaetey, kertei	what's wrong
+
+# --- numbers and amounts ---
+មួយ	7000	muy, mouy, moy, mui	one
+ពីរ	3500	pi, pir, py	two
+បី	3000	bey, bei, bi	three
+បួន	2000	boun, buon, bun	four
+ប្រាំ	2500	pram, bram, prum	five
+ប្រាំមួយ	1000	prammuy, brammuy, prammouy	six
+ប្រាំពីរ	900	prampi, prampir, brampi, prampel	seven
+ប្រាំបី	900	prambey, brambey, prambei	eight
+ប្រាំបួន	800	pramboun, bramboun, prambuon	nine
+ដប់	2000	dob, dop, dorb	ten
+ម្ភៃ	800	mphey, mpey, mophey, mphei	twenty
+សាមសិប	500	samseb, samsib, samsep	thirty
+រយ	1500	roy, rouy, roi	hundred
+ពាន់	1500	poan, pan, porn, puon, poin	thousand
+ម៉ឺន	1000	meun, mern, muen	ten thousand
+លាន	1200	lean, lian, lien	million
+ដង	1200	dong, dang, dorng	times
+ច្រើន	3500	jren, chren, jroen, jrern, chroen, jern	many, much
+តិច	2000	tej, tech, tich, tic, tij	few, little
+បន្តិច	2000	bontej, bontech, bontich, bantich, buntej	a little
+ខ្លះ	2000	klas, khlas, klah, khlah	some
+ទាំង	2500	tang, teang, taing	all, both
+ទាំងអស់	1800	tangos, teangos, tangoh, teangoh, tangors	all
+ទាំងអស់គ្នា	900	tangosknea, teangohknia, tangoskea	everyone
+អស់	2500	os, oh, ors, ah	all gone, finished
+គ្រប់	1500	krub, krob, krup, krop	every, enough
+គ្រប់គ្នា	800	krubknea, krobknia, krupkea, krubkea	everybody
+គ្រប់គ្រាន់	500	krubkroan, krobkroan, krupkran, krubkron	enough
+រាល់	1000	roal, rol, ral, rorl	every
+គ្មាន	2000	kmean, kmian, khmean, kmien	have no
+ជាង	2500	jeang, jiang, chieng, cheang	more than
+ជាងគេ	800	jeangke, jiangke, cheangke, jeangkae	most of all
+បំផុត	1200	bomphot, bamphot, bompot, bumphot, bomphut	most
+ល្មម	700	lmom, lamom, lmorm	enough, moderate
+ខ្វះ	600	khvas, kvas, khvah, kvah, khwas	lack
+លើស	500	lers, leus, loes, lerh	exceed
+ចំនួន	900	jomnuon, chomnuon, jamnuon, jomnoun, chamnuon	amount
+
+# --- time ---
+ថ្ងៃ	5000	thngai, tngai, thngay, tngay, tngei, thngei	day
+ថ្ងៃនេះ	2500	thngainis, tngainis, tngaynis, tngainih, thngainih, tngnis	today
+ម្សិលមិញ	900	msilminh, mselmenh, selminh, mserlmenh	yesterday
+មិញ	1200	minh, menh, mign	just now, last
+ស្អែក	2000	saek, sek, saaek, sahek	tomorrow
+ខានស្អែក	500	khansaek, kansaek, khansek	day after tomorrow
+ឥឡូវ	2500	eylov, eilov, ilov, eylouv, aylov, elov, eylv	now
+ពេលនេះ	1200	pelnis, pelnih, paelnis	now
+មុន	2500	mun, mon, moun	before
+ក្រោយ	2500	kroy, kraoy, kroi, krauy	after, behind
+ក្រោយមក	500	kroymok, kraoymok, kroymk	afterwards
+បន្ទាប់	900	bontoab, bontorb, bantoab, buntoab	next
+បន្ទាប់មក	600	bontoabmok, bontoabmk, bantoabmok	then
+តិចទៀត	900	tejtiet, techteat, tejtt	soon
+យប់	2500	yub, yob, yup, yop	night
+ព្រឹក	2500	prek, prerk, pruk, preuk, proek, brek	morning
+ល្ងាច	2000	lngeach, lngach, langeach, lngiech, lgeach, lngaj	evening
+ថ្ងៃត្រង់	700	thngaitrong, tngaitrong, tngaytrong	noon
+ម៉ោង	3000	mong, maong, moung, morng	hour, o'clock
+នាទី	1200	neati, nati, niati, neatee	minute
+ខែ	3000	khae, kae, khe	month
+ឆ្នាំ	4000	chnam, chhnam, jnam, chnum	year
+អាទិត្យ	2000	atit, artit, atet, atith	week, Sunday
+សប្តាហ៍	500	sabda, sapada, sabpada	week
+ចន្ទ	600	jan, chan, jann	Monday
+អង្គារ	500	ongkea, angkea, ongkia, angkear	Tuesday
+ពុធ	500	put, puth, pout	Wednesday
+ព្រហស្បតិ៍	500	prohos, prohoas, brohos, prohors	Thursday
+សុក្រ	500	sok, sokr, suk	Friday
+សៅរ៍	600	sav, sao, sau	Saturday
+រាល់ថ្ងៃ	900	roalthngai, roltngai, raltngay	every day
+ជានិច្ច	500	jeanij, jeanich, cheanich	always
+តែងតែ	700	tengte, taengtae, tengtae	always
+ធ្លាប់	1200	thloab, tloab, tlob, thlorb, tlab	used to
+មិនដែល	800	mindel, mindael, mundel	never
+អត់ដែល	800	otdel, ortdael, otdael, addel	never
+កំពុង	2500	kompung, kompong, kumpung, kpg, kampung	(doing now)
+ទើប	1500	terb, teb, teub, toeb, terp	just
+ទើបតែ	900	terbte, tebtae, terbtae	just now
+រួច	1800	rouch, ruoj, ruj, rouj, ruoch	done
+រួចហើយ	900	roujhery, ruojhz, rujhz, rouchhey	already
+នៅឡើយ	500	nvlery, novlaey, novlery	yet
+ម្តង	1500	mdong, mdang, madong	once
+ម្តងទៀត	900	mdongtiet, mdangteat, mdongtt	again
+ពេលខ្លះ	600	pelklas, pelkhlah, pelklah	sometimes
+ជួនកាល	400	juonkal, junkal, chuonkal	sometimes
+ឆាប់	1200	chab, chhab, chap, jhab	quick, soon
+យូរ	1500	yu, you, yur, yoo	long time
+ភ្លាម	700	pleam, phleam, pliem, plam	at once
+ទាន់	1200	toan, torn, tan, toin	in time, yet
+មិនទាន់	900	mintoan, mintorn, muntoan, mintan	not yet
+អត់ទាន់	900	ottoan, orttoan, ottorn, adtoan, ottan	not yet
+នៅតែ	900	novte, nvte, novtae, nvtae, nautae	still
+ស្រាប់	500	srab, srap, srabb	already
+ស្រាប់តែ	500	srabte, srabtae, sraptae	suddenly
+ចុងក្រោយ	700	jongkroy, chongkraoy, jungkroy, jongkraoy	last
+ដំបូង	900	dombong, dambong, dumbong, domboung	first
+ទីមួយ	500	timuy, timouy, teemuy, timoy	first
+កាល	900	kal, karl, kaal	time (past)
+កាលពី	900	kalpi, karlpi, kalpy	back when
+សព្វថ្ងៃ	500	sopthngai, sobtngai, sabthngay, sobthngai	nowadays
+បច្ចុប្បន្ន	500	bajjoban, pachoban, bachobon, bajjobon	present
+អនាគត	600	anakot, anakut, arnakot, anakort	future
+អតីត	500	atit, adet, ateit, adeit	past, ex-
+ពេលវេលា	800	pelvelea, pelvelia, paelvelea, pelvela	time
+ឆ្នាំថ្មី	500	chnamthmey, chhnamtmey, jnamthmei	new year
+រដូវ	500	rodov, rodouv, radov, rordov	season
+
+# --- common verbs ---
+ចង់	6000	jg, jong, chong, jorng, jang, chg	want
+ធ្វើ	7000	tver, thver, twer, tveu, tvoe	do, make
+ធ្វើការ	2000	tverka, tverkar, thverka, tveuka	work
+ញ៉ាំ	2500	nham, nh, nyam, nam, yam	eat
+ហូប	1500	hob, hop, houb, hoab	eat
+ផឹក	1500	pherk, perk, phek, pek, phoek, pheuk	drink
+ស៊ី	800	si, see, sy	eat (rough)
+ពិសា	500	pisa, pisar, bisa	eat (polite)
+ទទួលទាន	500	totuoltean, totultean, totuoltien	eat (polite)
+ដេក	1500	dek, daek, deik	sleep
+គេង	1500	keng, geng, keing	sleep
+ងងុយ	600	ngonguy, ngoguy, nguy	sleepy
+ភ្ញាក់	500	pnheak, pnhak, phnheak	wake up
+ក្រោក	700	krok, kraok, krork	get up
+អង្គុយ	800	ongkuy, angkuy, ongkoy, okuy	sit
+ឈរ	700	chor, chhor, jhor	stand
+ដើរ	1800	der, daer, deur, dar	walk
+ដើរលេង	1200	derleng, daerleng, derlg	go out for fun
+រត់	900	rot, rut, rort	run
+ជិះ	1200	jis, jih, chis, jes, jiss	ride
+បើក	1800	berk, baek, bek, boek	open, drive
+បិទ	1200	bet, bit, berd, bid	close
+មើល	3500	merl, mel, meul, moel, ml	look, watch
+ឃើញ	3000	khernh, kernh, kheunh, keunh, khern, kern	see
+ស្តាប់	1500	sdab, sdap, stab, sdabb	listen
+ឮ	800	leu, lu, ler, lue	hear
+និយាយ	3500	niyeay, niyay, niyey, nyeay, nyy	speak
+ប្រាប់	2500	prab, brab, prap, brap	tell
+សួរ	1500	sour, suor, sur, soor	ask
+ឆ្លើយ	900	chlery, chlaey, jlery, chhlery	answer
+ហៅ	1500	hav, hao, hau, how	call
+គិត	2500	kit, kirt, kert, kid	think
+គិតថា	1500	kittha, kitta, kerttha	think that
+ដឹង	4000	deng, dg, derng, doeng, dung	know
+ស្គាល់	1800	skoal, skal, sgoal, skorl, skol	know (someone)
+ចេះ	2000	jes, jeh, ches, cheh, jess	know how
+យល់	1800	yol, yul, yorl, yl	understand
+យល់ព្រម	700	yolprom, yulprom, yolbrom, yorlprom	agree
+ចាំ	2500	jam, cham, jum	wait, remember
+រង់ចាំ	900	rongjam, rungjam, rongcham	wait
+ភ្លេច	1200	plej, phlech, plech, phlej, plich	forget
+រៀន	2500	rean, rien, rian, ren	study
+បង្រៀន	700	bongrean, bangrean, bongrien	teach
+សិក្សា	1000	seksa, siksa, sekksa, seksar	study
+អាន	1000	an, arn, aan	read
+សរសេរ	1000	sorse, sorser, sose, saser, sorsae	write
+លេង	2500	leng, lg, laeng, leing	play
+សើច	1000	serj, serch, saech, sech, seuch	laugh
+យំ	900	yum, yom, youm	cry
+ស្រឡាញ់	3000	srolanh, sl, srlanh, sralanh, srolan, slanh	love
+ចូលចិត្ត	2000	joljet, choljet, joljit, cholchet, joljert	like
+ចូល	2500	jol, chol, joul, choul	enter
+ចេញ	2500	jenh, chenh, jen, chen	leave, out
+ស្អប់	800	saob, sob, saop, sahob	hate
+ខឹង	1500	kheng, keng, kherng, khoeng	angry
+ខ្លាច	1200	klach, khlach, klaj, khlaj	afraid
+ភ័យ	900	phey, pey, phei, phoy, pei	scared
+នឹក	2000	nek, nerk, nik, neuk, noek	miss
+ជួប	2000	juob, jub, chuob, joub, juop, jurb	meet
+ជួយ	2500	juy, jouy, chuoy, juoy, chuy, joy	help
+ទិញ	2500	tinh, tenh, tin, ting	buy
+លក់	2000	lok, luk, lork, lourk	sell
+បង់	600	bong, bang, borng	pay
+ចាយ	900	jay, chay, jai, chai	spend
+ចំណាយ	800	jomnay, chomnay, jamnay, jomnai	spend
+សន្សំ	400	sonsom, sansom, sonsum	save
+ខ្ចី	600	kjey, khchey, kjei, khjey	borrow
+សង	600	song, sorng, sang	pay back
+យក	3000	yok, yk, york, youk	take
+ដាក់	2500	dak, dakk, darc, dac	put
+ទុក	1500	tuk, tok, touk	keep
+ប្រើ	2500	prer, brer, prae, preu, broe, bre	use
+ត្រូវ	5000	trov, trouv, trow, trv, trau, trao	must, correct
+ត្រូវការ	1500	trovka, trovkar, trouvka, trvka	need
+អាច	3500	aj, ach, arch, aach, arj	can
+គួរ	1200	kour, kuor, kur, kuo	should
+ចាប់	1800	jab, chab, jap, chap	catch
+ចាប់ផ្តើម	900	jabpderm, chabpdaem, jabpdem, jabphderm	start
+ចប់	1500	job, chob, jop, chop, jorb	end
+ឈប់	1500	chob, chhob, chop, jhob, chub	stop
+បញ្ចប់	800	banjob, bonjob, panchob, banchob, bonjop	finish
+បន្ត	900	bonto, bonta, bantor, bontor	continue
+រស់	900	ros, ruos, rous, ruh	live
+រស់នៅ	900	rosnov, rosnv, ruosnov	live (somewhere)
+ស្លាប់	1000	slab, slap, slabb	die
+កើត	1500	kert, kaet, ket, koet, kerd	be born, happen
+ឈឺ	1800	chheu, cheu, chher, cher, chue, jheu, chhue	sick, hurt
+ហត់	900	hot, hort, hut	tired
+អស់កម្លាំង	500	oskomlang, oskamlang, ohkomlang	worn out
+សុំ	3000	som, sum, soum, sm	ask for, please
+សូម	2500	som, soum, saum, sum	please
+បាត់	1500	bat, batt, bart	lose, vanish
+រក	2500	rok, rk, rork, rouk	look for
+រកស៊ី	500	roksi, roksee, rorksi	do business
+ខំ	600	khom, kom, khum	try hard
+ព្យាយាម	900	pyeayeam, pyayeam, pyiayiam, payayam, pyayam	try
+សាក	800	sak, sark, saak	try, test
+សាកល្បង	600	saklbong, saklbang, sakolbong	try out
+ប្តូរ	800	pdo, bdo, pdor, pdou, bdor	change
+ផ្លាស់ប្តូរ	600	plaspdo, phlasbdo, plahpdo	change
+ផ្ញើ	1200	pnher, phnher, pnheu, phnheu, pnger, phnger	send
+បញ្ជូន	500	banjoun, bonjun, banchoun, bonjoun	send
+ទទួល	1800	totuol, totul, tortuol, totoul, tatuol	receive
+ទទួលបាន	900	totuolban, totulban, totoulban	get
+ថត	1200	thot, tot, thort, tort	record, photograph
+ថតរូប	900	thotrub, totroub, thotroub, totrub	take a photo
+ឈ្នះ	800	chnas, chneas, chhneah, chnah, jneas, chnes	win
+ចាញ់	800	janh, chanh, jan, chan	lose
+ត្រឡប់	900	trolob, tralob, trolop, trorlob	return
+មកវិញ	800	mokvinh, mkvinh, mokvenh, mkvenh	come back
+ទៅវិញ	800	tvvinh, tovvinh, tovvenh	go back
+ងូតទឹក	800	ngouttek, nguttek, ngoutterk, ngottuk	take a bath
+លាង	600	leang, lieng, liang	wash
+បោក	400	bok, baok, bork	wash clothes
+សម្អាត	500	somat, somaat, samart, samaat	clean
+ដាំ	600	dam, dum, damm	plant, boil
+ចម្អិន	400	jomen, jomaen, jamen, chamen	cook
+ធ្វើម្ហូប	500	tvermhob, tvermhoub, thvermahob	cook
+កាត់	900	kat, katt, kart	cut
+បង្កើត	800	bongkert, bangkaet, bongkaet, bongket	create
+សាងសង់	500	sangsong, sangsang, sarngsong	build
+ជួសជុល	500	jousjul, juosjol, chuoschul, jusjul	repair
+បង្ហាញ	800	bonghanh, banghanh, bonghan, bonghang	show
+បង្ហោះ	600	bonghos, banghos, bonghoh, bonghaos	post, upload
+ផ្សាយ	600	psay, phsay, psai, bsay	broadcast
+ផ្សាយផ្ទាល់	500	psaypteal, phsayphtoal, psaypdoal, psayptol	live broadcast
+ចែករំលែក	500	jekromlek, chaekrumlek, jaekromlaek, jekrumlek	share
+ចុច	800	joj, choch, juj, chuch, jouch	press, click
+ទាញយក	400	teanhyok, tanhyok, tienhyok	download
+ចុះឈ្មោះ	500	joschmos, johchmoh, chosjmos, joschhmos	register
+រក្សា	700	reaksa, raksa, reksa, rakksa	keep
+ថែ	700	thae, tae, the	take care of
+ថែរក្សា	500	thaereaksa, taereaksa, thereksa	look after
+ការពារ	800	kapea, karpea, kapear, kapia	protect
+ប្រយ័ត្ន	1000	broyat, proyat, brayat, proyath, broyath, pryat	careful
+ហាម	600	ham, harm, haam	forbid
+អនុញ្ញាត	600	anunhat, anuhnhat, anunyat, anunhath	allow
+សម្រេច	800	somrej, samrech, somrach, samrej, somrech	decide, achieve
+សម្រេចចិត្ត	500	somrejjet, samrechchet, somrejchet	decide
+ជ្រើសរើស	600	jrersrers, chrerschhers, jreusreus, jresres, chroesroes	choose
+រើស	800	rers, reus, roes, res, rerh	pick
+ប្រៀបធៀប	400	briebthieb, preabtheab, breabtheab, prieptiep	compare
+ស្មាន	900	sman, smarn, smaan	guess
+សង្ស័យ	600	songsay, sangsay, songsai, sangsai	doubt
+ជឿ	1200	jeur, juer, cheu, jeu, joeu, jer	believe
+ទុកចិត្ត	600	tukjet, tokjet, tukchet, toukjet	trust
+កុហក	900	kohok, kuhok, kohork, kohak	lie
+សរសើរ	500	sorser, sorsaer, saser, sorseur	praise
+គោរព	700	korup, koarup, korop, korob	respect
+រៀបការ	700	reabka, riebka, reabkar, rebka, riepka	marry
+លែង	900	leng, laeng, lerng	no longer, quit
+ចិញ្ចឹម	500	jenhjem, chenhchem, jinhjem, jenjerm, chinhchoem	raise
+ច្រៀង	800	jreang, chrieng, jrieng, jreng, chreang	sing
+រាំ	700	roam, rom, ram, rum	dance
+ហែលទឹក	400	heltek, haelterk, heltuk	swim
+ផុស	600	phos, pos, phous	post
+ឆាត	600	chat, chhat, jat	chat
+ខល	500	khol, kol, khorl	call
+តេ	700	te, tae	phone
+ឆែក	600	chek, chaek, chhek	check
+ខមិន	500	khomen, komen, khomin, khoment	comment
+ឡាយ	500	lay, lai, laay	like (online)
+ស៊ែរ	500	sae, saer, sher	share (online)
+កុម្ម៉ង់	600	komong, kommong, kumong, komang	order
+ដឹកជញ្ជូន	500	dekjonjoun, doekjunjun, dekjunjoun, derkjonjun	deliver
+សាកថ្ម	400	sakthmor, saktmor, sakthma	charge the battery
+ផ្ញើសារ	500	pnhersa, phnhersar, pnheusa	send a message
+
+# --- feelings and polite words ---
+សប្បាយ	2000	sabay, sobay, sabbay, sbay, sabai	happy, fun
+សប្បាយចិត្ត	800	sabayjet, sobayjet, sbayjet	happy
+សុខសប្បាយ	1500	soksabay, soksobay, soksbay, suksabay	fine, well
+សុខ	1500	sok, suk, sokh	well, peace
+សុខភាព	800	sokpheap, sokpeap, sukpheap, sokaphiep	health
+ពិបាក	1500	pibak, pebak, pibark, bibak	difficult
+ពិបាកចិត្ត	600	pibakjet, pibakchet, pebakjet	upset
+ស្រួល	1500	sroul, sruol, srul, srol	easy, comfortable
+កំសត់	500	komsot, kamsot, komsort	poor thing
+អាណិត	800	anet, anit, arnet, anert	pity
+សុំទោស	1800	somtos, somtoh, sumtos, somtous	sorry
+ទោស	800	tos, toh, tous, torh	fault
+អត់ទោស	600	ottos, orttos, ottoh, adtos	forgive
+អភ័យទោស	400	apheytos, apeytos, apheitos	pardon
+លើកលែង	400	lerkleng, leuklaeng, lerklaeng	forgive, except
+អរគុណ	2500	orkun, arkun, okun, akun, orkon, orkoun	thank you
+ជំរាបសួរ	800	jomreabsour, chomreabsuor, jumreabsour, jomreapsour, jumriebsur	hello (formal)
+សួស្តី	1500	susdey, suosdey, sousdey, sursdey, susdei, sosdey	hello
+លា	800	lea, lia, la	goodbye
+លាហើយ	600	leahery, leahz, liahery, leahey	goodbye
+រីករាយ	800	rikreay, rikray, rikriey, rekreay	glad
+ស្វាគមន៍	500	svakum, svakom, swakum, svakhom	welcome
+បាទ	3000	bat, baat, bart, bath	yes (said by men)
+ចាស	3000	jas, chas, jah, cha, ja, jaa	yes (said by women)
+អារម្មណ៍	900	arom, aromm, arorm, arum	feeling
+ព្រួយ	600	pruoy, prouy, pruy, bruoy	worried
+បារម្ភ	600	barom, barorm, baromph, barum	worry
+ព្រួយបារម្ភ	500	pruoybarom, prouybarom, pruybarom	worried
+ស្តាយ	700	sday, sdai, sdaay	regret
+ធុញ	800	thunh, tunh, thun, tonh	fed up
+អផ្សុក	800	absok, apsok, afsok, orbsok, absuk	bored
+អៀន	800	ien, ean, eien, ian, earn	shy
+ខ្មាស	600	kmas, khmas, kmah, khmah	ashamed
+ច្រណែន	500	jronen, chranaen, jronaen, chronen	jealous
+ប្រច័ណ្ឌ	500	projan, brochan, prachan, projann	jealous (in love)
+ភ្ញាក់ផ្អើល	400	pnheakpaerl, phnheakphaerl, pnheakpael	surprised
+សង្ឃឹម	800	songkhem, songkhum, sangkhem, songkem	hope
+ស្នេហា	1200	sneha, snaeha, snehar	love
+ស្នេហ៍	600	sne, snae, sneh	love
+ចិត្ត	2500	jet, chet, jit, chit, jert	heart, mind
+ចិត្តល្អ	600	jetlaor, chetlor, jitlaor, jetlor	kind
+ទុក្ខ	500	tuk, tok, tukh	sorrow
+សំណាង	800	somnang, samnang, somnarng, sumnang	luck
+សំណាងល្អ	500	somnanglaor, samnanglor, somnanglor	good luck
+ជោគជ័យ	700	jokjey, chokchey, jorkjey, jokchey, jokjay	success
+សុបិន	500	soben, sobin, sopin, soborn	dream
+យល់សប្តិ	400	yolsob, yulsob, yolsop, yolsab	dream (while asleep)
+
+# --- describing words ---
+ល្អ	4000	laor, lor, lo, laar, laaw	good
+អាក្រក់	1200	akrok, akrork, arkrok, akrak	bad
+ស្អាត	2000	saat, sart, saart, sahat	beautiful, clean
+សង្ហា	600	songha, sangha, songhar	handsome
+ស្រស់	600	sros, sras, sruos, sroh	fresh
+ស្រស់ស្អាត	800	srossaat, srossart, srohsaat	pretty
+គួរឱ្យស្រឡាញ់	500	kouroysrolanh, kuoroysrolanh, kuroysl	cute
+ឡូយ	600	loy, louy, looy	cool
+ខូច	1200	khoj, koch, khoch, koj, kouch	broken, naughty
+ធំ	2500	thom, tom, thum, tum	big
+តូច	2500	toj, toch, touch, touj, tauch	small
+វែង	900	veng, vaeng, weng	long
+ខ្លី	800	kley, khley, klei, khlei, kli	short
+ខ្ពស់	1200	kpos, khpos, kpous, kpuh, khpuos	tall, high
+ទាប	800	teab, tiep, teap, tieb	low
+ធាត់	700	thoat, toat, that, thorth, thoit	fat
+ស្គម	600	skom, sgom, skorm	thin
+ថ្មី	2500	thmey, tmey, thmei, tmei, tmy, thmy	new
+ក្តៅ	1500	kdav, kdao, kdau, khdao	hot
+ត្រជាក់	1000	trojeak, trajeak, trochak, trojak, trorjeak	cold
+រងា	600	rongea, rongia, rogea	feeling cold
+កក់ក្តៅ	400	kokkdav, kokkdao, korkkdao	warm
+ឆ្ងាញ់	1500	chnganh, changanh, jnganh, chngan, chhnganh	delicious
+ផ្អែម	600	paem, phaem, paaem, pahem	sweet
+ជូរ	500	ju, jou, chou, jur, chu	sour
+ប្រៃ	400	prai, brai, pray, bray	salty
+ហឹរ	600	hel, her, heul, herl	spicy
+ឃ្លាន	900	klean, khlean, klian, khlien, klien	hungry
+ស្រេក	500	srek, sraek, sreik	thirsty
+ឆ្អែត	500	chaet, chhaet, chet, chaert	full
+ខ្ជិល	800	kjel, khjil, kjil, khchel, kchil, kjerl	lazy
+លឿន	900	leurn, luern, loeun, leun, lern, luen	fast
+យឺត	900	yeut, yert, yuet, yut, yeurt	slow, late
+ប្រញាប់	800	pronhab, pranhab, bronhab, pronhap, branhap	in a hurry
+រវល់	1200	rovol, rovul, rorvol, ravol, rvl	busy
+ទំនេរ	900	tumne, tomne, tumner, tomner, tumnae	free (time)
+ស្ងាត់	600	sngat, sngatt, sngart	quiet
+ស្ងៀម	400	sngiem, sngeam, sngem	silent
+កំប្លែង	600	komplaeng, kompleng, kamplaeng, komblaeng	funny
+ចម្លែក	600	jomlek, chomlaek, jamlaek, chamlek	strange
+ឆ្កួត	800	chkuot, chkout, jkuot, chhkuot, chkut	crazy
+ល្ងង់	800	lngong, longong, lngung, lngorng, ngong	stupid
+ឆ្លាត	800	chlat, chhlat, jlat, chlart	smart
+ពូកែ	1200	puke, pukae, pouke, poukae	good at
+ខ្សោយ	600	ksoy, khsoy, ksaoy, khsaoy	weak
+ខ្លាំង	2500	klang, khlang, klaing, klg, khlaing	strong, very
+ស្រាល	600	sral, srarl, sraal	light
+ធ្ងន់	700	thngon, tngon, thngun, tngun, thngorn	heavy
+រឹង	600	reng, rerng, rung, roeng	hard
+ទន់	600	tun, ton, torn, toun	soft
+ពេញ	1200	penh, pen, peng, pign	full
+ទទេ	600	tote, tate, totae, torte	empty
+សាមញ្ញ	500	samanh, samagn, saman, sarmanh	simple
+ទំនើប	500	tumnerb, tomnerb, tumneub, tumnoeb	modern
+ល្បី	800	lbey, lbei, labey, lbi	famous
+ក្រ	900	kror, kro, kra	poor
+ក្រីក្រ	400	kreykror, kreikro, kreykro	poor
+ថ្លៃ	2000	thlai, tlai, thlay, tlay, thley, tlei	expensive, price
+ថោក	900	thok, thaok, tok, taok	cheap
+ខុស	1500	khos, kos, khoh, khus, kus	wrong
+ត្រឹមត្រូវ	600	tremtrov, tremtrouv, trumtrov	correct
+សំខាន់	1500	somkhan, samkhan, somkan, sumkhan, samkan	important
+ចាំបាច់	800	jambach, chambach, jambaj, jumbach	necessary
+ធម្មតា	1500	thomada, tomada, thammada, thomda, tormada	normal
+ពិសេស	1000	pises, piseh, peses, biseh	special
+ផ្សេង	1500	pseng, phseng, bseng, pserng, psaeng	different, other
+ជិត	1500	jit, chit, jet, jert, chet	near
+ឆ្ងាយ	1200	chngay, chhngay, chngai, jngay, changay	far
+កាច	700	kach, kaj, kac, karch	fierce
+ស្លូត	600	slout, slot, slut, sloat	gentle
+ស្មោះ	500	smos, smoh, smaos, smors	loyal
+ស្មោះត្រង់	500	smostrong, smohtrong, smaostrong	honest
+ក្លាហាន	400	klahan, khlahan, klaharn	brave
+ដាច់	600	dach, daj, dac, darch	cut off, sold out
+
+# --- places ---
+ផ្ទះ	3500	pteas, phteas, pteah, phteah, ptes, pteh, ptas	house, home
+សាលា	2500	sala, sarla, sla	school, hall
+សាកលវិទ្យាល័យ	600	sakolvityealay, sakolvityalai, saklvityealay, sakol	university
+ថ្នាក់	1200	thnak, tnak, thnakk	class, grade
+កន្លែង	2000	konleng, kanleng, konlaeng, kanlaeng, konlang, kl	place
+ក្រុង	1200	krong, krung, kroung	city
+ទីក្រុង	900	tikrong, tykrong, tikrung, teekrong	city
+ភ្នំពេញ	2000	phnompenh, pnompenh, phnumpenh, pp, pnumpenh, phnompen	Phnom Penh
+ស្រុក	1800	srok, sruk, srork	district, homeland
+ខេត្ត	1500	khet, ket, khaet, kaet	province
+ភូមិ	1200	phum, pum, phoum, poum	village
+ប្រទេស	2000	brotes, protes, brates, prates, prortes	country
+កម្ពុជា	2000	kampuchea, kompuchea, kampujea, kampuchia	Cambodia
+ខ្មែរ	3500	khmer, kmer, khmae, kmae, khmai, kmai	Khmer
+ចិន	1200	jen, chen, jin, chin	China, Chinese
+ថៃ	900	thai, tai, thay	Thailand, Thai
+វៀតណាម	800	vietnam, vetnam, vietnarm	Vietnam
+បារាំង	700	barang, baraing, barung	French, foreigner
+ជប៉ុន	700	japon, jopon, chapon, japun	Japan
+កូរ៉េ	700	kore, korea, kori	Korea
+អាមេរិក	800	amerik, amerika, amarik, amerek	America
+អង់គ្លេស	1000	onkles, angkles, ongles, ongleh, angleh	English
+ផ្សារ	1800	psa, phsa, psar, phsar, bsa	market
+ហាង	1500	hang, harng, haang	shop
+ហាងកាហ្វេ	500	hangkafe, hangcafe, hangkafae	coffee shop
+មន្ទីរពេទ្យ	900	muntipet, montipet, monteepet, mundipet, muntypet	hospital
+ធនាគារ	600	thoneakea, tonekea, thoneakear, tneakea	bank
+ក្រុមហ៊ុន	1200	kromhun, krumhun, kromhon, krumhon	company
+ការិយាល័យ	500	kariyalay, kareyalai, kariyealay	office
+រោងចក្រ	500	rongjak, rongchak, roungjak	factory
+សណ្ឋាគារ	500	sonthakea, santhakea, sonthakear	hotel
+វត្ត	900	vot, wat, voat, vat	pagoda
+បន្ទប់	1500	bontob, bantob, bontub, buntub, bontop	room
+បន្ទប់ទឹក	600	bontobtek, bantobterk, bontubtuk	bathroom
+ផ្លូវ	2000	plov, phlov, plouv, phlouv, plow, plau	road
+ស្ពាន	500	spean, spien, spian	bridge
+ទន្លេ	500	tonle, tunle, tonlae, tonleh	river
+សមុទ្រ	800	samut, somut, samot, samoth, smot	sea
+ភ្នំ	900	phnom, pnom, phnum, pnum	mountain
+ព្រៃ	600	prey, prei, brey	forest
+ដី	1200	dey, dei, day, di	land
+មេឃ	800	mek, mekh, maek	sky
+ខាង	2000	khang, kang, kharng	side
+ខាងក្រៅ	600	khangkrav, kangkrao, khangkrao	outside
+ខាងក្នុង	600	khangknong, kangknong, khangknung	inside
+ខាងមុខ	600	khangmuk, kangmuk, khangmok	in front
+ខាងក្រោយ	600	khangkroy, kangkraoy, khangkraoy	behind
+កណ្តាល	700	kondal, kandal, kondarl, kandarl	middle
+ឆ្វេង	500	chveng, chhveng, jveng, chweng	left
+ស្តាំ	500	sdam, sdum, stam, sdamm	right
+ត្រង់	800	trong, trorng, trung, trang	straight, at
+ជុំវិញ	400	jumvinh, chumvinh, jomvenh, jumvenh	around
+រវាង	500	roveang, rovieng, roviang, rorveang	between
+
+# --- food and drink ---
+បាយ	3000	bay, bai, baay, by	rice, meal
+ម្ហូប	1500	mhob, mhoub, mahob, mhop, mhoup	food
+នំ	1200	num, nom, noum	cake, snack
+នំប៉័ង	500	numpang, nompang, numbang	bread
+ទឹក	3000	tek, terk, tuk, teuk, toek, tik	water
+ទឹកកក	600	tekkok, terkkok, tukkok, tekkork	ice
+ទឹកដោះគោ	400	tekdosko, terkdohko, tukdosko	milk
+កាហ្វេ	1200	kafe, cafe, kafae, kahve, kaafe	coffee
+ស្រា	900	sra, sraa, srar	alcohol
+បៀរ	800	bia, bier, bea	beer
+ភេសជ្ជៈ	300	phesajjeak, pesajeak, phesacheak	drink
+សាច់	1200	sach, saj, sac, sachh	meat
+សាច់ជ្រូក	400	sachjruk, sajjrouk, sachchrouk	pork
+សាច់គោ	400	sachko, sajko, sachkou	beef
+សាច់មាន់	400	sachmoan, sajmoan, sachmorn, sajmon	chicken
+ត្រី	1500	trey, trei, tray, tri	fish
+មាន់	900	moan, morn, mon, moin, muon	chicken
+ជ្រូក	700	jruk, jrouk, chrouk, chruk	pig
+គោ	800	ko, kou, koo, go	cow
+បន្លែ	700	bonle, bonlae, banlae, bunle	vegetables
+ផ្លែឈើ	700	plechher, phlaechheu, plecher, plaecheu, plejher	fruit
+ស្វាយ	500	svay, swai, svai, sway	mango
+ចេក	500	jek, chek, jaek, chaek	banana
+ស្ករ	500	skor, sko, sgor, skar	sugar
+អំបិល	400	ombel, ambel, ombil, ambil	salt
+ម្ទេស	400	mtes, mates, mtehs	chili
+ស៊ុប	400	sup, sub, soup	soup
+គុយទាវ	500	kuyteav, kuytiev, kuyteaw, kuytiew, guyteav	noodle soup
+មី	700	mi, mee, my	noodles
+
+# --- animals and nature ---
+សត្វ	800	sat, satt, sath	animal
+ឆ្កែ	1000	chke, chkae, jkae, chhke, chhkae, jke	dog
+ឆ្មា	900	chma, chhma, jma, chmar	cat
+ផ្កា	800	pka, phka, pkar, phkar	flower
+ផ្កាយ	500	pkay, phkay, pkai, phkai	star
+ដើមឈើ	600	dermchher, daemcheu, demcher, dermcher	tree
+ភ្លៀង	1200	pleang, phleang, plieng, phlieng, pleng	rain
+ខ្យល់	800	kyol, khyol, kjol, kyal	wind
+ព្រះអាទិត្យ	400	preahatit, preasatit, preahatet	sun
+ព្រះច័ន្ទ	400	preahjan, preahchan, preasjan	moon
+ភ្លើង	1200	plerng, phlerng, pleung, phleung, ploeng	fire, light, power
+ពន្លឺ	400	ponleu, punleu, ponler	light
+ងងឹត	400	ngonget, ngongit, ngoget, ngonguet	dark
+ថ្ម	500	thmor, tmor, thma, thmo	stone, battery
+
+# --- things ---
+លុយ	3000	luy, louy, loy, lui	money
+ប្រាក់	1500	prak, brak, prakk	money, silver
+ប្រាក់ខែ	600	prakkhae, prakkhe, brakkhae, prakke	salary
+តម្លៃ	1500	domlai, tomlai, damlai, domlay, tamlai	price
+ឡាន	2000	lan, laan, larn	car
+ម៉ូតូ	1800	moto, motor, mto, motou	motorbike
+កង់	800	kong, korng, kang, kg	bicycle, wheel
+ឡានក្រុង	400	lankrong, lankrung, larnkrong	bus
+តុកតុក	400	tuktuk, toktok, touktouk	tuk-tuk
+យន្តហោះ	500	yonhos, yunhos, yonhoh, yonthos, yunhoh	airplane
+ទូរស័ព្ទ	1200	tourosab, turasab, tursab, toursab, tourasap, tolosab, toresap	phone
+លេខ	1200	lek, lekh, laek, leik	number
+សារ	1200	sa, sar, saa	message
+រូប	2000	rub, roub, rob, roup, rup	picture
+រូបថត	1200	rubthot, roubtot, robthot, ruptot, rubtot	photo
+សំឡេង	800	somleng, samleng, somlaeng, sumleng	voice, sound
+កុំព្យូទ័រ	700	kompyuto, kompyuter, kumpyuto	computer
+ទូរទស្សន៍	500	turotos, tourotus, turatos, tourtos	television
+ទីវី	500	tivi, tv, tiv, teevee	TV
+កាមេរ៉ា	400	kamera, kamara, kamerar	camera
+កម្មវិធី	600	kamvithi, kammavithi, komvithi, kamvithy	program, app
+ប្រព័ន្ធ	400	bropon, propon, brapoan, propoan	system
+លេខសម្ងាត់	400	leksomngat, lekhsamngat, leksomngatt	password
+គណនី	500	kanani, konanei, kananei, kaknani	account
+សៀវភៅ	1000	sievphov, seavphov, sievpov, seavpov, siewphov, sevpov	book
+ប៊ិច	400	bij, bich, bic, bik	pen
+សំបុត្រ	600	sombot, sambot, sombut, somboth	letter, ticket
+ឯកសារ	700	eksa, aeksa, eksar, ekasa, aekasar	document
+អីវ៉ាន់	900	eyvan, eivan, ivan, eyvann, aivan	stuff, goods
+ទំនិញ	700	tumninh, tomninh, tumnenh, tomnenh	goods
+គ្រឿង	700	kreurng, kreung, kroeung, kruerng, krerng	machine, set
+ទ្វារ	700	tvea, tvear, tvia, twea	door
+បង្អួច	400	bonguoch, bangouch, bonguoj	window
+តុ	700	tok, tu, tuk, to	table
+កៅអី	600	kavey, kaoey, kaoei, kauey	chair
+គ្រែ	500	kre, krae, grae	bed
+ខោ	700	kho, khao, kao, khau	trousers
+អាវ	1200	av, ao, aav, aov, aw	shirt
+ខោអាវ	900	khoav, khaoao, kaoav, khoao	clothes
+ស្បែកជើង	800	sbekjerng, sbaekjeung, sbekjeng, sbekcherng	shoes
+មួក	500	muok, mouk, muk	hat
+វ៉ែនតា	400	venta, vaenta, wenta	glasses
+កាបូប	600	kabob, kaboub, kabop, karbob	bag
+នាឡិកា	500	nealika, nalika, nealeka, nialika	clock, watch
+ថ្នាំ	1500	thnam, tnam, thnum, tnum	medicine
+អំណោយ	400	omnoy, amnaoy, omnaoy, amnoy	gift
+កាដូ	500	kado, kadou, kadoo	gift
+ពណ៌	800	por, poa, poar, pour	color
+ក្រហម	700	krohom, krahom, krohorm, krorhom	red
+ខៀវ	600	khiev, kheav, kiev, khiew, keav	blue
+បៃតង	500	baitong, baytong, baitang, baytang	green
+លឿង	500	leurng, luerng, leung, loeung, lerng	yellow
+ខ្មៅ	800	kmav, khmao, kmao, khmau, kmau	black
+ស	900	sor, sa, so	white
+
+# --- body ---
+ក្បាល	1000	kbal, kbarl, kabal	head
+ភ្នែក	900	pnek, phnek, pnaek, phnaek	eye
+មុខ	2000	muk, mok, mukh, mouk	face, front
+មាត់	800	moat, mort, mot, moit	mouth
+សក់	700	sok, sork, sak	hair
+ដៃ	1200	dai, day, dei	hand
+ជើង	1200	jerng, jeung, cherng, joeng, jeng, cheung	foot, leg
+ពោះ	800	pos, poh, pous, puoh	belly
+បេះដូង	600	besdong, behdong, besdoung, besdaung	heart
+ឈឺក្បាល	600	chheukbal, cheukbal, chherkbal	headache
+ឈឺពោះ	500	chheupos, cheupoh, chherpos	stomach ache
+ក្អក	400	kaok, kork, kahok	cough
+គ្រុន	500	krun, kron, kroun	fever
+
+# --- school and work ---
+ការ	3000	ka, kar, kaa	work, (makes a noun)
+ការងារ	1800	kangea, karngea, kangear, kagnea, kangia	job
+កិច្ចការ	600	kejka, kechka, kichka, kejkar	task
+កិច្ចការផ្ទះ	400	kejkapteas, kechkaphteah, kejkapteah	homework
+មេរៀន	600	merean, merien, meren	lesson
+លំហាត់	500	lumhat, lomhat, lumhatt	exercise
+ប្រឡង	1000	brolong, prolong, bralong, pralong, bronlong	exam
+ពិន្ទុ	600	pintu, pentu, pinto	score
+ជាប់	1000	joab, jorb, choab, jorp	pass, stuck
+ធ្លាក់	900	thleak, tleak, thlak, tlak	fall, fail
+ភាសា	1500	pheasa, peasa, phiasa, piasa, phasa, pasa	language
+វិជ្ជា	500	vichea, vijea, vichia, vijjea	subject
+ចំណេះដឹង	400	jomnesdeng, chomnehdoeng, jamnesdeng	knowledge
+បទពិសោធន៍	500	botpisot, botpisaot, bortpisot, botpisoth	experience
+អប់រំ	500	obrom, abrom, oprum, obrum	education
+ប្រជុំ	800	brojum, projum, brochum, prajum	meeting
+គម្រោង	600	kumrong, komrong, kumroung, komroung	project
+ផែនការ	600	phenka, phaenka, penka, phenkar	plan
+អាជីវកម្ម	500	achivakam, ajivakam, achivkam, ajivkam	business
+សេវា	600	seva, sewa, sevaa, saeva	service
+សេវាកម្ម	400	sevakam, sewakam, sevakom	service
+ចំណេញ	500	jomnenh, chomnenh, jamnenh, jomnen	profit
+ខាត	500	khat, khart, khaat	loss
+បញ្ចុះតម្លៃ	500	banjosdomlai, bonjostomlai, banjohdamlai	discount
+ឥតគិតថ្លៃ	400	etkitthlai, eitkittlai, etkittlay	free of charge
+
+# --- ideas ---
+រឿង	3000	rerng, reung, roeung, rueng, rerg, rg	story, matter
+បញ្ហា	2000	banha, panha, bonha, banhha, bagnha	problem
+គ្មានបញ្ហា	600	kmeanbanha, kmeanpanha, kmianbanha	no problem
+សំណួរ	600	somnour, samnuor, somnuor, sumnour	question
+ចម្លើយ	500	jomlery, chomlaey, jamlery, chamlaey	answer
+ហេតុផល	500	hetphol, haetphal, hetpol	reason
+លទ្ធផល	500	lathaphol, latphol, lortphol, lotphal	result
+គំនិត	800	kumnit, komnit, kumnet, komnet	idea
+យោបល់	500	yobol, yaobal, yobal, yorbol	opinion
+ព័ត៌មាន	1200	poramean, podamean, portmean, poromean, potmean, pordamean	news, information
+ដំណឹង	600	domneng, damneng, domnerng, dumneng	news
+ឈ្មោះ	2500	chmos, chhmos, chmoh, jmos, chmuos, chhmuoh, cmos	name
+អាយុ	1500	ayu, aryu, ayuk, ayou	age
+ភេទ	500	phet, pheit, phaet	gender
+អាសយដ្ឋាន	400	asayathan, asaiyathan, asayadthan	address
+ជីវិត	1500	jivit, chivit, jiwit, jivet, chivet	life
+របៀប	900	robeab, robiep, robieb, rorbeab	way, method
+វិធី	700	vithi, vithy, viti, withi	method
+ប្រភេទ	700	brophet, prophet, braphet, prapet	type
+ផ្នែក	900	pnek, phnek, pnaek, phnaek	part, section
+ច្បាប់	1200	jbab, chbab, jbap, chbap	law
+រដ្ឋាភិបាល	800	rothaphibal, rathaphibal, rotapibal, rodthaphibal	government
+នយោបាយ	800	noyobay, nayobay, noyaobay, noyobai	politics
+សេដ្ឋកិច្ច	700	sethakej, sethakech, setakej, saethakich, sethakij	economy
+សង្គម	800	songkum, sangkum, songkom, sangkom	society
+វប្បធម៌	500	vobatho, vabbathor, vobathor, vabathoa	culture
+ប្រវត្តិ	500	brovat, provat, bravoat, prowat	history
+ប្រវត្តិសាស្ត្រ	400	brovatsas, provatsas, bravoatsas	history
+សាសនា	600	sasna, sasana, sasnar, sasona	religion
+ព្រះ	1500	preah, preas, pras, prah, breah	god, sacred
+ឱកាស	700	okas, aokas, okah, aukas	chance
+ពិធី	500	pithi, pithy, piti, pithee	ceremony
+បុណ្យ	1200	bon, bun, bonn	festival, merit
+ចូលឆ្នាំ	600	joljnam, cholchnam, joljhnam, joulchnam	new year festival
+ភ្ជុំបិណ្ឌ	400	pchumben, phchumben, pjumben, pchumbin	Pchum Ben
+អាពាហ៍ពិពាហ៍	400	apeapipea, apeapipeah, arpeapipea	wedding
+កំណើត	400	komnert, kamnaet, komnaet	birth
+ខួបកំណើត	500	khuobkomnert, kuobkomnaet, khoubkomnert	birthday
+ដំណើរ	500	domner, damnaer, domnaer, dumner	trip
+ទេសចរណ៍	400	tesjor, tesajor, teschor	tourism
+កម្សាន្ត	500	komsan, kamsan, komsarn	entertainment
+
+# --- fun ---
+កុន	800	kon, kun, koun	movie
+ចម្រៀង	800	jomreang, chomrieng, jamrieng, jomrieng, jomreng	song
+បទ	900	bot, bort, bod	song, track
+ភ្លេង	800	pleng, phleng, plaeng, phlaeng	music
+កីឡា	600	kela, keila, kila, keyla	sport
+បាល់	900	bal, ball, barl	ball
+បាល់ទាត់	600	baltoat, baltat, ballteat, baltort	football
+ហ្គេម	800	gem, gaem, hgem	game

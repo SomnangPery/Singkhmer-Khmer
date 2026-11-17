@@ -1,0 +1,7 @@
+.gradle/
+.idea/
+.kotlin/
+build/
+*.iml
+# Machine-specific: where the Android SDK is, and where build output goes.
+local.properties

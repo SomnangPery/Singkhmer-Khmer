@@ -1,0 +1,10 @@
+[package]
+name = "khmer-core"
+description = "Khmer keyboard engine: puts every syllable into one correct Unicode order"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+proptest = "1"

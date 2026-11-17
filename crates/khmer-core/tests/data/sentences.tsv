@@ -1,0 +1,98 @@
+# Test sentences for romanized mode: what is typed, and the Khmer it should become.
+#
+# Columns are separated by one TAB character:
+#   1. the romanized sentence, as someone would type it
+#   2. the Khmer sentence it should turn into
+#
+# `cargo test` measures how often the right sentence is the first suggestion
+# and how often it is among the first three.
+#
+# These sentences were written by hand together with the dictionary, so they
+# mostly test that the machinery works. Replace them with real messages from
+# real people to measure real accuracy.
+
+# --- from the design document ---
+nh jg tv sala rean	ខ្ញុំចង់ទៅសាលារៀន
+
+# --- everyday chat ---
+nham bay hz nv	ញ៉ាំបាយហើយនៅ
+bong tv na	បងទៅណា
+oun srolanh bong	អូនស្រឡាញ់បង
+nh ot deng te	ខ្ញុំអត់ដឹងទេ
+soksabay te	សុខសប្បាយទេ
+orkun jren	អរគុណច្រើន
+tngai nis kdav nas	ថ្ងៃនេះក្តៅណាស់
+nh nek oun	ខ្ញុំនឹកអូន
+jg nh ey	ចង់ញ៉ាំអី
+bong tver ey	បងធ្វើអី
+oun nv na	អូននៅណា
+nh nv pteas	ខ្ញុំនៅផ្ទះ
+kom plech	កុំភ្លេច
+kom kheng	កុំខឹង
+som tos	សុំទោស
+ot ey te	អត់អីទេ
+min ey te	មិនអីទេ
+nh ot mean luy	ខ្ញុំអត់មានលុយ
+chmos ey	ឈ្មោះអី
+ayu ponman	អាយុប៉ុន្មាន
+mong ponman hz	ម៉ោងប៉ុន្មានហើយ
+thlai ponman	ថ្លៃប៉ុន្មាន
+saek juob knea	ស្អែកជួបគ្នា
+nh jg keng	ខ្ញុំចង់គេង
+ngonguy keng nas	ងងុយគេងណាស់
+chnganh nas	ឆ្ងាញ់ណាស់
+saat nas	ស្អាតណាស់
+hot nas	ហត់ណាស់
+nh rovol nas	ខ្ញុំរវល់ណាស់
+tv der leng	ទៅដើរលេង
+nh tv tver ka	ខ្ញុំទៅធ្វើការ
+mok pi na	មកពីណា
+kot tv psa	គាត់ទៅផ្សារ
+yg tv tang os knea	យើងទៅទាំងអស់គ្នា
+nh jol jet oun	ខ្ញុំចូលចិត្តអូន
+bong srolanh oun klang nas	បងស្រឡាញ់អូនខ្លាំងណាស់
+mean banha ey	មានបញ្ហាអី
+kmean banha	គ្មានបញ្ហា
+juy nh phong	ជួយខ្ញុំផង
+nh ot yol	ខ្ញុំអត់យល់
+niyeay pheasa khmer	និយាយភាសាខ្មែរ
+rean pheasa onkles	រៀនភាសាអង់គ្លេស
+nh kompung rean	ខ្ញុំកំពុងរៀន
+kompung tver ey	កំពុងធ្វើអី
+merl kon	មើលកុន
+pherk kafe	ផឹកកាហ្វេ
+jis moto tv sala	ជិះម៉ូតូទៅសាលា
+jam bontej	ចាំបន្តិច
+tv pteas vinh	ទៅផ្ទះវិញ
+mok vinh hz	មកវិញហើយ
+yub nis nh ot tv te	យប់នេះខ្ញុំអត់ទៅទេ
+prek nis nham ey	ព្រឹកនេះញ៉ាំអី
+luy os hz	លុយអស់ហើយ
+rok luy	រកលុយ
+tinh eyvan	ទិញអីវ៉ាន់
+chheu kbal	ឈឺក្បាល
+nh ot sabay jet	ខ្ញុំអត់សប្បាយចិត្ត
+men te	មែនទេ
+ng hz	ហ្នឹងហើយ
+ku jea mnus laor	គឺជាមនុស្សល្អ
+pros nh ot deng	ព្រោះខ្ញុំអត់ដឹង
+pi neak	ពីរនាក់
+pteas robos nh	ផ្ទះរបស់ខ្ញុំ
+jeamuy knea	ជាមួយគ្នា
+susdey bong	សួស្តីបង
+lea hz	លាហើយ
+prab nh phong	ប្រាប់ខ្ញុំផង
+nh kit tha ot ban te	ខ្ញុំគិតថាអត់បានទេ
+oun nham bay nv	អូនញ៉ាំបាយនៅ
+
+# --- spellings that are not in the dictionary and need a variant rule ---
+nh chong tov salaa rien	ខ្ញុំចង់ទៅសាលារៀន
+khnhom ot dengg te	ខ្ញុំអត់ដឹងទេ
+bongg srolanh ounn	បងស្រឡាញ់អូន
+orkoun chren	អរគុណច្រើន
+niyiay piasa kmer	និយាយភាសាខ្មែរ
+
+# --- English kept as English ---
+nh leng facebook	ខ្ញុំលេង facebook
+ok bong	ok បង
+merl youtube	មើល youtube

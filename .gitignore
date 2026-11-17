@@ -1,0 +1,17 @@
+/target/
+# Machine-specific build settings (keeps build output out of the synced folder).
+/.cargo/config.toml
+
+# Raw copies of other projects' files, fetched by the scripts in datasets/.
+# Large, and not ours to hand out: get them from their sources instead.
+/datasets/downloads/
+__pycache__/
+
+# Scratch output of the command-line tool, and backups.
+/result.txt
+/result-keys.txt
+*.bak
+
+# From github.com/Rinzyy/sorsay, which is GPL-3.0. Kept out of the repository
+# and out of words-imported.tsv so the project is not bound to that licence.
+/datasets/19_sorsay_social_lexicon.txt

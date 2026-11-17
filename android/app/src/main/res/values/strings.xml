@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Khmer Keyboard</string>
+    <string name="subtype_khmer">Khmer</string>
+
+    <string name="setup_title">Set up the keyboard</string>
+    <string name="setup_step_enable">1. Turn on Khmer Keyboard in the system settings.</string>
+    <string name="setup_enable">Open keyboard settings</string>
+    <string name="setup_step_choose">2. Choose it as the keyboard to type with.</string>
+    <string name="setup_choose">Choose keyboard</string>
+    <string name="setup_step_try">3. Try it here.</string>
+    <string name="setup_try_hint">Type here</string>
+    <string name="setup_help_title">How to type</string>
+    <string name="setup_help">The globe key switches between three ways of typing. Hold it to change to another keyboard.\n\n<b>ខ្មែរ</b>: a Khmer layout. Press the parts of a syllable in any order; they are stored in the correct order. Hold a key for the character in its corner.\n\n<b>Singkhmer</b>: spell Khmer words with Latin letters, with a space after each word: <i>nh jg tv sala rean</i>. Press space twice, or tap a suggestion, to finish the phrase.\n\n<b>English</b>: plain Latin letters. Used by itself for passwords, email and web addresses.</string>
+
+    <string name="enter_go">Go</string>
+    <string name="enter_search">Search</string>
+    <string name="enter_send">Send</string>
+    <string name="enter_next">Next</string>
+    <string name="enter_done">Done</string>
+</resources>

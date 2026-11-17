@@ -1,0 +1,12 @@
+[package]
+name = "khmer-cli"
+description = "Command-line tool for trying out khmer-core"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "khmer"
+path = "src/main.rs"
+
+[dependencies]
+khmer-core = { path = "../khmer-core" }

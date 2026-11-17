@@ -1,0 +1,13 @@
+[package]
+name = "khmer-android"
+description = "The Khmer keyboard engine as a native library for the Android app"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+# Android loads this as libkhmer_android.so.
+crate-type = ["cdylib"]
+
+[dependencies]
+khmer-core = { path = "../khmer-core" }
+jni = "0.21"

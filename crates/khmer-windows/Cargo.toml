@@ -1,0 +1,34 @@
+[package]
+name = "khmer-windows"
+description = "The Khmer keyboard as a Windows input method (a TSF text service)"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "khmer_tsf"
+# cdylib: the khmer_tsf.dll that Windows loads. rlib: so the tests can use the
+# code directly.
+crate-type = ["cdylib", "rlib"]
+
+# The code is empty on other systems, so the workspace still builds there.
+[target.'cfg(windows)'.dependencies]
+khmer-core = { path = "../khmer-core" }
+# The `implement` macro of `windows` writes code that names this crate.
+windows-core = "0.58"
+windows = { version = "0.58", features = [
+    "implement",
+    "Win32_Foundation",
+    "Win32_Globalization",
+    "Win32_Graphics_Gdi",
+    "Win32_Security",
+    "Win32_System_Com",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Ole",
+    "Win32_System_Registry",
+    "Win32_System_SystemServices",
+    "Win32_System_Variant",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_TextServices",
+    "Win32_UI_WindowsAndMessaging",
+] }
