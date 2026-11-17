@@ -1,4 +1,4 @@
-# Singkhmer Keyboard
+# Bunny Keyboard
 
 Type Khmer the way you already chat, in Latin letters, and get Khmer script.
 
@@ -25,14 +25,12 @@ powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/rel
 Windows asks for permission to change your PC: click **Yes**. That is all.
 You do not need to download the project or install anything else.
 
-Then press **Windows + Space** and pick **Singkhmer (Khmer Keyboard)**:
+Then press **Windows + Space** and pick **Singkhmer (Bunny Keyboard)**:
 
 ```
 ENG  English (United States)
 ខ្មែរ  Khmer
-     Singkhmer (Khmer Keyboard)      ← this one
-ខ្មែរ  Khmer
-     Khmer NiDA (Khmer Keyboard)
+     Singkhmer (Bunny Keyboard)      ← this one
 ```
 
 Apps that were already open may need a restart before they offer it.
@@ -76,13 +74,13 @@ If the keyboard does not know a word, or you spell it your own way, add it:
 
 - click **+ Add my word** at the bottom of the popup (it fills in the word you
   just typed), or
-- open **Khmer Keyboard - My words** from the Start menu.
+- open **Bunny Keyboard - My words** from the Start menu.
 
 Write the spelling and the Khmer word, then click **Add word**. From the next
 key press, typing that spelling gives your word first, in every app.
 
 Your words are kept in a plain text file you can also edit in Notepad,
-`%APPDATA%\Khmer Keyboard\my-words.txt`, one per line:
+`%APPDATA%\Bunny Keyboard\my-words.txt`, one per line:
 
 ```
 bong = បង
@@ -112,8 +110,6 @@ powershell -ep bypass -c "& ([scriptblock]::Create((irm https://github.com/Somna
   keyboard and run the remove line above, then
   [tell us](#help-make-it-better) which app it was.
 - **32-bit apps** (a few old programs) do not offer the keyboard yet.
-- **Khmer NiDA (Khmer Keyboard)** is also installed: the standard Khmer
-  layout, for typing Khmer letters directly.
 
 ## Help make it better
 

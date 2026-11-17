@@ -1,7 +1,7 @@
 param(
     [switch]$Remove,
     [string]$Dll,
-    [string]$InstallDir = (Join-Path $env:ProgramFiles 'Khmer Keyboard'),
+    [string]$InstallDir = (Join-Path $env:ProgramFiles 'Bunny Keyboard'),
     [switch]$AsAdmin,
     [string]$Log
 )
@@ -9,15 +9,25 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $TextService = '{1AF035EE-A180-4349-AD63-A5FC35FE4122}'
+# Singkhmer, the one keyboard offered.
 $Keyboards = @(
     '{2E577226-7197-4E08-93B6-E5F7DA9937F4}'
+)
+# Keyboards an earlier version offered (Khmer NiDA): taken off the language
+# list by an update.
+$RetiredKeyboards = @(
     '{7B70356C-154C-445B-B08A-E771770C5538}'
 )
 $Tips = $Keyboards | ForEach-Object { "0453:$TextService$_" }
+$RetiredTips = $RetiredKeyboards | ForEach-Object { "0453:$TextService$_" }
 
 $DllName = 'khmer_tsf.dll'
 $EditorName = 'my-words.ps1'
-$Shortcut = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Khmer Keyboard - My words.lnk'
+$StartMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'
+$Shortcut = Join-Path $StartMenu 'Bunny Keyboard - My words.lnk'
+# Where version 0.1 installed, under the old name "Khmer Keyboard".
+$OldInstallDir = Join-Path $env:ProgramFiles 'Khmer Keyboard'
+$OldShortcut = Join-Path $StartMenu 'Khmer Keyboard - My words.lnk'
 $Regsvr32 = Join-Path $env:windir 'System32\regsvr32.exe'
 
 function Test-Administrator {
@@ -61,6 +71,7 @@ function Install-AsAdmin {
         throw "Windows did not accept the keyboard (regsvr32 gave error $code). Nothing was registered."
     }
     Install-Editor
+    Remove-OldName
     "Installed $installed"
 }
 
@@ -76,10 +87,28 @@ function Install-Editor {
     $link = $shell.CreateShortcut($Shortcut)
     $link.TargetPath = $powershell
     $link.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$installed`""
-    $link.Description = 'Add your own Singkhmer words to the Khmer Keyboard'
+    $link.Description = 'Add your own Singkhmer words to Bunny Keyboard'
     $link.IconLocation = (Join-Path $env:windir 'System32\input.dll') + ',0'
     $link.Save()
-    "Added 'Khmer Keyboard - My words' to the Start menu"
+    "Added 'Bunny Keyboard - My words' to the Start menu"
+}
+
+# An earlier version under the old name "Khmer Keyboard". Windows now loads
+# the DLL from the new folder, so the old copy can go (or, if an open app
+# still has it in use, be renamed and left for a restart).
+function Remove-OldName {
+    if (Test-Path $OldShortcut) { Remove-Item $OldShortcut -Force }
+    if (-not (Test-Path $OldInstallDir)) { return }
+    foreach ($file in @(Get-ChildItem $OldInstallDir -Force)) {
+        try {
+            Remove-Item $file.FullName -Force
+        } catch {
+            if ($file.Extension -ne '.old') {
+                try { Rename-Item $file.FullName ($file.Name + '.' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.old') } catch { }
+            }
+        }
+    }
+    if (-not (Get-ChildItem $OldInstallDir -Force)) { Remove-Item $OldInstallDir -Force }
 }
 
 function Remove-Editor {
@@ -90,6 +119,11 @@ function Remove-Editor {
 
 function Remove-AsAdmin {
     $installed = Join-Path $InstallDir $DllName
+    $old = Join-Path $OldInstallDir $DllName
+    if ((Test-Path $old) -and -not (Test-Path $installed)) {
+        # Only the version under the old name is here: Windows still knows it.
+        [void](Invoke-Regsvr32 @('/u', '/s', "`"$old`""))
+    }
     if (Test-Path $installed) {
         $code = Invoke-Regsvr32 @('/u', '/s', "`"$installed`"")
         if ($code -ne 0) {
@@ -98,6 +132,7 @@ function Remove-AsAdmin {
         Clear-InstalledDll
     }
     Remove-Editor
+    Remove-OldName
     Remove-OldCopies
     if ((Test-Path $InstallDir) -and -not (Get-ChildItem $InstallDir -Force)) {
         Remove-Item $InstallDir
@@ -173,6 +208,12 @@ function Set-Keyboards([bool]$Present) {
         $khmer = $languages[$languages.Count - 1]
     }
     $changed = @()
+    foreach ($tip in $RetiredTips) {
+        if ($khmer.InputMethodTips -contains $tip) {
+            [void]$khmer.InputMethodTips.Remove($tip)
+            $changed += $tip
+        }
+    }
     foreach ($tip in $Tips) {
         $has = $khmer.InputMethodTips -contains $tip
         if ($Present -and -not $has) {
@@ -193,7 +234,7 @@ try {
     if ($Remove) {
         [void](Set-Keyboards $false)
         Invoke-AdminPart @('-Remove')
-        Write-Host "The Khmer keyboard is removed."
+        Write-Host "Bunny Keyboard is removed."
     } else {
         if (-not [Environment]::Is64BitOperatingSystem) { throw "This keyboard is built for 64-bit Windows only." }
         if (-not $Dll) { $Dll = Get-BuiltDll }
@@ -201,8 +242,8 @@ try {
         Invoke-AdminPart @('-Dll', "`"$Dll`"")
         [void](Set-Keyboards $true)
         Write-Host ""
-        Write-Host "The Khmer keyboard is installed."
-        Write-Host "Press Windows+Space and choose 'Singkhmer (Khmer Keyboard)' or 'Khmer NiDA (Khmer Keyboard)'."
+        Write-Host "Bunny Keyboard is installed."
+        Write-Host "Press Windows+Space and choose 'Singkhmer (Bunny Keyboard)'."
         Write-Host "Apps that were already open may need to be restarted before they offer it."
     }
 } catch {

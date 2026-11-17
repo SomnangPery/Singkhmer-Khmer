@@ -33,7 +33,7 @@ impl ITfDisplayAttributeInfo_Impl for InputAttribute_Impl {
     }
 
     fn GetDescription(&self) -> Result<BSTR> {
-        Ok(BSTR::from("Khmer Keyboard: text being typed"))
+        Ok(BSTR::from("Bunny Keyboard: text being typed"))
     }
 
     fn GetAttributeInfo(&self, attribute: *mut TF_DISPLAYATTRIBUTE) -> Result<()> {

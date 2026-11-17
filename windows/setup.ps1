@@ -1,4 +1,4 @@
-# Installs the Khmer keyboard on this PC straight from GitHub, with no Rust
+# Installs Bunny Keyboard (Singkhmer) on this PC straight from GitHub, with no Rust
 # and no copy of the project. In Windows PowerShell:
 #
 #   irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1 | iex
@@ -37,7 +37,7 @@ param(
         try {
             $installer = Join-Path $folder 'install.ps1'
             $dll = Join-Path $folder 'khmer_tsf.dll'
-            Write-Host "Downloading the Khmer keyboard..."
+            Write-Host "Downloading Bunny Keyboard..."
             Get-File 'install.ps1' $installer
             $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $installer)
             if ($Remove) {

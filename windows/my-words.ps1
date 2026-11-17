@@ -1,8 +1,8 @@
 ﻿# The "my words" editor: your own Singkhmer spellings for Khmer words.
 #
-# Opened from the Start menu ("Khmer Keyboard - My words") or from "Add my
+# Opened from the Start menu ("Bunny Keyboard - My words") or from "Add my
 # word" at the bottom of the suggestion popup, which passes the word just
-# typed as -Spelling. The words are kept in %APPDATA%\Khmer Keyboard\my-words.txt,
+# typed as -Spelling. The words are kept in %APPDATA%\Bunny Keyboard\my-words.txt,
 # one per line ("bong = បង"); the keyboard reads that file again whenever it
 # changes, so a saved word works at the next key press, in every app.
 
@@ -17,10 +17,10 @@ Add-Type -Namespace KhmerKeyboard -Name Dpi -MemberDefinition '[DllImport("user3
 [void][KhmerKeyboard.Dpi]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
-$Folder = Join-Path $env:APPDATA 'Khmer Keyboard'
+$Folder = Join-Path $env:APPDATA 'Bunny Keyboard'
 $File = Join-Path $Folder 'my-words.txt'
 $Header = @(
-    '# My words for the Khmer Keyboard (Singkhmer).'
+    '# My words for Bunny Keyboard (Singkhmer).'
     '# One per line: the spelling, = and the Khmer word. For example: bong = បង'
     '# The keyboard reads this file again whenever it changes.'
 )
@@ -59,7 +59,7 @@ $khmerFont = New-Object System.Drawing.Font('Leelawadee UI', 13)
 $accent = [System.Drawing.Color]::FromArgb(0, 95, 184)
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'Khmer Keyboard - My words'
+$form.Text = 'Bunny Keyboard - My words'
 $form.Font = $ui
 $form.StartPosition = 'CenterScreen'
 $form.AutoScaleMode = 'Dpi'
@@ -108,7 +108,7 @@ $khmerBox.Margin = New-Object System.Windows.Forms.Padding(0)
 $layout.Controls.Add($spellingBox, 0, 3)
 $layout.Controls.Add($khmerBox, 1, 3)
 
-$hint = New-Label 'To type the Khmer word, press Windows+Space and pick Singkhmer or Khmer NiDA.' $ui ([System.Drawing.Color]::FromArgb(112, 112, 112))
+$hint = New-Label 'Tip: you can type the Khmer word here in Singkhmer too, then press Space twice.' $ui ([System.Drawing.Color]::FromArgb(112, 112, 112))
 $hint.MaximumSize = New-Object System.Drawing.Size(420, 0)
 $hint.Margin = New-Object System.Windows.Forms.Padding(0, 6, 0, 6)
 $layout.Controls.Add($hint, 0, 4); $layout.SetColumnSpan($hint, 2)

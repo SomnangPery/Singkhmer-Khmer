@@ -15,12 +15,14 @@ use windows::Win32::UI::TextServices::{
 
 use crate::{module_instance, CLSID_TEXT_SERVICE, LANGUAGE_KHMER, PROFILE_KHMER, PROFILE_SINGKHMER};
 
-const SERVICE_NAME: &str = "Khmer Keyboard";
+const SERVICE_NAME: &str = "Bunny Keyboard";
 
-const PROFILES: [(GUID, &str); 2] = [
-    (PROFILE_SINGKHMER, "Singkhmer (Khmer Keyboard)"),
-    (PROFILE_KHMER, "Khmer NiDA (Khmer Keyboard)"),
-];
+/// The keyboards offered: only Singkhmer.
+const PROFILES: [(GUID, &str); 1] = [(PROFILE_SINGKHMER, "Singkhmer (Bunny Keyboard)")];
+
+/// Keyboards an earlier version offered. Taken out of Windows when this
+/// version is registered, so an update leaves none of them behind.
+const RETIRED_PROFILES: [GUID; 1] = [PROFILE_KHMER];
 
 const CATEGORIES: [GUID; 4] = [
     GUID_TFCAT_TIP_KEYBOARD,
@@ -92,6 +94,9 @@ pub(crate) fn register() -> Result<()> {
     unsafe {
         let profiles: ITfInputProcessorProfileMgr =
             CoCreateInstance(&CLSID_TF_InputProcessorProfiles, None, CLSCTX_INPROC_SERVER)?;
+        for profile in RETIRED_PROFILES {
+            let _ = profiles.UnregisterProfile(&CLSID_TEXT_SERVICE, LANGUAGE_KHMER, &profile, 0);
+        }
         for (profile, name) in PROFILES {
             let name: Vec<u16> = name.encode_utf16().collect();
             profiles.RegisterProfile(
@@ -128,7 +133,8 @@ pub(crate) fn unregister() -> Result<()> {
             None,
             CLSCTX_INPROC_SERVER,
         ) {
-            for (profile, _) in PROFILES {
+            let all = PROFILES.iter().map(|(profile, _)| *profile).chain(RETIRED_PROFILES);
+            for profile in all {
                 let _ = profiles.UnregisterProfile(&CLSID_TEXT_SERVICE, LANGUAGE_KHMER, &profile, 0);
             }
         }
@@ -160,6 +166,9 @@ mod tests {
                 script.contains(&format!("'{}'", braced(&profile))),
                 "{name} is missing from install.ps1"
             );
+        }
+        for profile in RETIRED_PROFILES {
+            assert!(script.contains(&format!("'{}'", braced(&profile))), "install.ps1 takes retired keyboards off");
         }
         assert!(script.contains(&format!("\"{LANGUAGE_KHMER:04X}:$TextService$_\"")));
     }

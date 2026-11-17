@@ -225,9 +225,15 @@ Both run on a computer, with the real engine:
 ## The Windows keyboard
 
 `crates/khmer-windows` builds `khmer_tsf.dll`, an input method for 64-bit
-Windows 10 and 11. Once installed it works in every app. It adds two keyboards
-to the Khmer language, and Windows+Space switches between them and your other
-keyboards:
+Windows 10 and 11, released as **Bunny Keyboard**. Once installed it works in
+every app. It adds the Singkhmer keyboard to the Khmer language, and
+Windows+Space switches between it and your other keyboards.
+
+The text service also has a Khmer NiDA keyboard (the second row below). It is
+built and tested but not registered with Windows: `RETIRED_PROFILES` in
+`src/register.rs` takes it off PCs that had version 0.1. To offer it again,
+move it back into `PROFILES` and `$Keyboards` in `windows/install.ps1`.
+
 
 | Keyboard | Keys | What happens to a key press |
 | --- | --- | --- |
@@ -264,8 +270,7 @@ powershell -ep bypass -c "irm https://github.com/SomnangPery/Singkhmer-Khmer/rel
 
 It downloads the keyboard from the latest release and runs `install.ps1` on
 it. Windows asks for administrator permission once. Then press Windows+Space:
-"Singkhmer (Khmer Keyboard)" and "Khmer NiDA (Khmer Keyboard)" are listed
-under Khmer. To take it off again:
+"Singkhmer (Bunny Keyboard)" is listed under Khmer. To take it off again:
 
 ```
 powershell -ep bypass -c "& ([scriptblock]::Create((irm https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/setup.ps1))) -Remove"
@@ -282,10 +287,10 @@ To build and install from the project folder instead, in Windows PowerShell:
 powershell -ExecutionPolicy Bypass -File windows\install.ps1
 ```
 
-This builds the DLL, copies it to `C:\Program Files\Khmer Keyboard`, tells
-Windows about it, and adds the two keyboards to your Khmer language. Windows
+This builds the DLL, copies it to `C:\Program Files\Bunny Keyboard`, tells
+Windows about it, and adds the keyboard to your Khmer language. Windows
 asks for administrator permission once, for the copying and the telling. Then
-press Windows+Space and choose "Singkhmer (Khmer Keyboard)". Apps that were
+press Windows+Space and choose "Singkhmer (Bunny Keyboard)". Apps that were
 already open may need a restart before they offer it.
 
 Run the same command again after changing the code. To take the keyboard off

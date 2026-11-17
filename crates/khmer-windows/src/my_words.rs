@@ -1,4 +1,4 @@
-//! The user's own words: `%APPDATA%\Khmer Keyboard\my-words.txt`.
+//! The user's own words: `%APPDATA%\Bunny Keyboard\my-words.txt`.
 //!
 //! The file is written by the "my words" editor (`windows/my-words.ps1`,
 //! installed next to this DLL) or by hand in Notepad. Each app that types
@@ -23,7 +23,7 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 pub fn file() -> Option<PathBuf> {
     let folder = std::env::var_os("APPDATA")?;
-    Some(PathBuf::from(folder).join("Khmer Keyboard").join("my-words.txt"))
+    Some(PathBuf::from(folder).join("Bunny Keyboard").join("my-words.txt"))
 }
 
 /// Reads the file again if it changed since it was last read, or was
