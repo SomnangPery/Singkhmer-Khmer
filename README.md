@@ -40,7 +40,8 @@ too, as "Khmer / Khmer". To keep only Bunny Keyboard, open **Settings → Time &
 language → Language & region**, click **⋯** next to Khmer, **Language
 options**, and remove the keyboard named **Khmer**.
 
-Needs 64-bit Windows 10 or 11.
+Needs 64-bit Windows 10 or 11. To take it off again, see
+[Uninstall](#uninstall).
 
 ## How to type
 
@@ -94,13 +95,20 @@ oun = អូន
 
 They stay on your PC when the keyboard is updated or removed.
 
-## Update or remove
+## Update
 
-To update, run the install line again.
+Run the [install line](#install) again. Your own words are kept.
 
-To remove it, open **Settings → Apps → Installed apps**, find **Bunny
-Keyboard**, click **⋯** and **Uninstall**. Windows asks for permission once,
-and a message says when it is done.
+## Uninstall
+
+1. Open **Settings → Apps → Installed apps**.
+2. Find **Bunny Keyboard**, click **⋯** and then **Uninstall**.
+3. Click **Yes** when Windows asks for permission. A message says when it is
+   done.
+
+**Bunny Keyboard is not in Installed apps?** You installed it before it was
+added there. Run the [install line](#install) once to update it, and then it
+will be there to uninstall.
 
 If Khmer was in your language list only for Bunny Keyboard, it is taken off
 too, so your PC is back to how it was.
