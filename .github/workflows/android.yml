@@ -1,0 +1,40 @@
+# Builds and tests the Android keyboard on every push that touches it. The
+# built app is kept with the run for 14 days (Summary > Artifacts >
+# BunnyKeyboard-android), to try a change on a phone before it is released.
+name: Android keyboard
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - 'crates/khmer-core/**'
+      - 'crates/khmer-android/**'
+      - 'Cargo.lock'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install the NDK and the Rust Android targets
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" > /dev/null
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+
+      - name: Test and build the app
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest assembleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BunnyKeyboard-android
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 14

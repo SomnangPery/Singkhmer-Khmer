@@ -6,6 +6,12 @@ plugins {
     id("com.android.application")
 }
 
+// The release workflow passes -PbunnyVersion=0.5.0. Its versionCode is 500.
+val bunnyVersion = (findProperty("bunnyVersion") as String?) ?: "0.1.0"
+val bunnyVersionCode = bunnyVersion.split('.').map { it.toInt() }
+    .let { (it + listOf(0, 0, 0)).take(3) }
+    .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
+
 android {
     namespace = "com.newkeyboard.khmer"
     compileSdk = 36
@@ -15,13 +21,26 @@ android {
         applicationId = "com.newkeyboard.khmer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = bunnyVersionCode
+        versionName = bunnyVersion
+    }
+
+    // A key for test builds, kept in the repository so that every release is
+    // signed the same way and installs over the one before. It is not secret:
+    // before the app goes to the Play Store, sign it with a private key instead.
+    signingConfigs {
+        create("test") {
+            storeFile = file("test-signing.keystore")
+            storePassword = "bunny-test"
+            keyAlias = "bunny-test"
+            keyPassword = "bunny-test"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("test")
         }
     }
 

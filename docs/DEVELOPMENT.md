@@ -215,6 +215,24 @@ folder such as OneDrive.
 On the phone, open the Khmer Keyboard app and follow its three steps: turn the
 keyboard on in the system settings, choose it, and try it.
 
+### Releases
+
+`.github/workflows/release.yml` runs the tests, builds `assembleRelease` with
+`-PbunnyVersion=<the tag's version>` and attaches it to the release as
+`BunnyKeyboard-android.apk`. The version gives the app's `versionCode`
+(0.5.0 is 500), so each release installs over the one before.
+`.github/workflows/android.yml` does the same on every push that touches the
+app or the engine and keeps the app with the run (Summary > Artifacts).
+
+Release builds are signed with `android/app/test-signing.keystore` (password
+`bunny-test`). It is in the repository on purpose, so that every build, on
+GitHub or on any computer, is signed the same way. It is not secret, so before
+the app goes to the Play Store it needs a private key kept out of the
+repository, and testers then have to uninstall the test version once.
+
+In PowerShell, quote the property: `.\gradlew.bat assembleRelease
+"-PbunnyVersion=0.5.0"`. Without the quotes PowerShell splits it at the dot.
+
 ### Its tests
 
 Both run on a computer, with the real engine:
@@ -236,7 +254,8 @@ Both run on a computer, with the real engine:
   phone.
 - Capital letters at the start of a sentence, sound on key press, a settings
   screen, swipe typing, emoji.
-- A release build signed for the Play Store.
+- A release build signed with a private key, for the Play Store (see
+  [Releases](#releases)).
 
 ## The Windows keyboard
 
@@ -302,8 +321,9 @@ tag's version into `install.ps1` (`$Version = 'dev'`) for that entry.
 A release is made by pushing a tag (`git tag v0.1.0`, then
 `git push origin v0.1.0`): `.github/workflows/release.yml` builds
 `khmer_tsf.dll` on GitHub and attaches it, `install.ps1` and `setup.ps1` to
-the release. The same workflow then builds the Mac keyboard and adds it; see
-[The Mac keyboard](#the-mac-keyboard).
+the release. The same workflow then builds the Mac keyboard and the Android app
+and adds them; see [The Mac keyboard](#the-mac-keyboard) and
+[Releases](#releases) under the Android app.
 
 To build and install from the project folder instead, in Windows PowerShell:
 

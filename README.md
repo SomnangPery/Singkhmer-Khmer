@@ -6,12 +6,14 @@ Type Khmer the way you already chat, in Latin letters, and get Khmer script.
 nh jg tv sala rean   →   ខ្ញុំចង់ទៅសាលារៀន
 ```
 
-A keyboard for Windows 10 and 11, and for the Mac. Suggestions show while you
-type, and it works in every app: browsers, Word, Telegram, Messenger, Notepad,
-Pages. Everything runs on your computer, with no internet. Nothing is sent
+A keyboard for Windows 10 and 11, for the Mac, and (in testing) for Android
+phones. Suggestions show while you type, and it works in every app: browsers,
+Word, Telegram, Messenger, Notepad, Pages. Everything runs on your computer or
+phone, with no internet. Nothing is sent
 anywhere unless you choose to [share words](#help-make-it-better).
 
-Install it on [Windows](#on-windows) or on a [Mac](#on-a-mac).
+Install it on [Windows](#on-windows), on a [Mac](#on-a-mac) or on
+[Android](#on-android).
 
 > **Early version.** It works, but some words will come out wrong. Please
 > [tell us](#help-make-it-better) when they do.
@@ -94,11 +96,46 @@ Good to know on a Mac:
 - Needs macOS 12 (Monterey) or newer, on an Apple silicon or Intel Mac. To
   take it off again, see [Uninstall](#uninstall).
 
+### On Android
+
+> **Test version.** The Android app has not been tried on many phones yet.
+> Please [tell us](#help-make-it-better) how it goes, and which phone you
+> have.
+
+**1. Download it.** On the phone, open this link in Chrome:
+
+```
+https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/BunnyKeyboard-android.apk
+```
+
+Chrome may warn that the file can harm your device, because it does not
+come from the Play Store. Tap **Download anyway**.
+
+**2. Install it.** Tap the downloaded file (or open it from **Files →
+Downloads**). The first time, Android asks to allow installs from Chrome:
+tap **Settings**, turn on **Allow from this source**, go back and tap
+**Install**. If Play Protect asks about the app, tap **More details →
+Install anyway**.
+
+**3. Turn it on.** Open the **Khmer Keyboard** app (the phone shows it under
+that name) and follow its three steps: turn the keyboard on in the system
+settings, choose it, and try it.
+
+On the phone the 🌐 key switches between three ways of typing:
+**ខ្មែរ** (the standard Khmer layout), **Singkhmer** (Latin letters, as
+below) and **English**. Hold 🌐 to go back to your usual keyboard.
+Suggestions show in a strip above the keys: tap one to send it. Password,
+email and web address fields start in English by themselves.
+
+Needs Android 8.0 or newer. To take it off again, see
+[Uninstall](#uninstall).
+
 ## How to type
 
 Type each word the way you would spell it in a chat, with a space after it.
 Each word turns into Khmer as you go. A second space sends the whole phrase.
-This works the same on Windows and on the Mac.
+This works the same on Windows and on the Mac; on Android, see
+[its own notes](#on-android).
 
 | You type | You get |
 | --- | --- |
@@ -128,6 +165,8 @@ While you type, a small popup shows the three best guesses:
 Khmer words are joined with no spaces between them, the way Khmer is written.
 
 ## Add your own words
+
+(On Windows and the Mac. The Android app does not have My words yet.)
 
 If the keyboard does not know a word, gives a wrong one, or you spell it your
 own way, add it:
@@ -162,6 +201,9 @@ the same words on both, copy the file from one to the other.
 Run the install line again ([Windows](#on-windows), [Mac](#on-a-mac)). Your
 own words are kept.
 
+On Android, download and install the app again from the
+[same link](#on-android). It installs over the old one.
+
 ## Uninstall
 
 ### On Windows
@@ -188,6 +230,11 @@ curl -fsSL https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/downlo
 
 Your words stay in `~/Library/Application Support/Bunny Keyboard`; delete that
 folder to remove them too.
+
+### On Android
+
+Open **Settings → Apps**, tap **Khmer Keyboard**, then **Uninstall**. (Or
+press and hold its icon and drag it to **Uninstall**.)
 
 ## Good to know
 
