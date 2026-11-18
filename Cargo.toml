@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/khmer-core", "crates/khmer-cli", "crates/khmer-android", "crates/khmer-windows"]
+members = ["crates/khmer-core", "crates/khmer-cli", "crates/khmer-android", "crates/khmer-windows", "crates/khmer-macos"]
 
 [workspace.package]
 version = "0.1.0"

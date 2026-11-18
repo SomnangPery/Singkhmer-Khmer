@@ -1,0 +1,3 @@
+/* The keyboard's name in the input menu and in System Settings. */
+CFBundleName = "Singkhmer (Bunny Keyboard)";
+CFBundleDisplayName = "Singkhmer (Bunny Keyboard)";

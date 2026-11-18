@@ -1,0 +1,30 @@
+# Builds and tests the Mac keyboard on every push that touches it, on one of
+# GitHub's Macs. The built app is kept with the run for 14 days (Summary >
+# Artifacts > BunnyKeyboard-mac), to try a change before it is released:
+# unzip it, then run  macos/install.sh --app BunnyKeyboard.app
+name: Mac keyboard
+
+on:
+  push:
+    paths:
+      - 'macos/**'
+      - 'crates/khmer-core/**'
+      - 'crates/khmer-macos/**'
+      - 'Cargo.lock'
+      - '.github/workflows/macos.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test
+        run: macos/build.sh --test
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BunnyKeyboard-mac
+          path: target/macos/BunnyKeyboard-mac.zip
+          retention-days: 14

@@ -1,0 +1,11 @@
+[package]
+name = "khmer-macos"
+description = "The Khmer keyboard engine as a C library for the Mac input method (macos/)"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+khmer-core = { path = "../khmer-core" }

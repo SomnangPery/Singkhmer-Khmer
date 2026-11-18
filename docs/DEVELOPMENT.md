@@ -2,7 +2,7 @@
 
 The user guide is the [README](../README.md). This page is for working on the code.
 
-A Khmer keyboard for Android and Windows, with two ways of typing:
+A Khmer keyboard for Android, Windows and the Mac, with two ways of typing:
 
 - **Singkhmer.** Type Khmer the way people write it in chat, in Latin
   letters, and get Khmer script: `nh jg tv sala rean` becomes
@@ -25,7 +25,8 @@ yet.
 | Command line | Works | [Try it](#try-it), below |
 | Android 8.0 and newer | Builds and passes its tests; not yet tried on a phone | [The Android app](#the-android-app) |
 | Windows 10 and 11, 64-bit | Builds and passes its tests; not yet installed or tried in a real app | [The Windows keyboard](#the-windows-keyboard) |
-| iPhone, Mac, Linux | Not started | |
+| macOS 12 and newer, Apple silicon and Intel | Written; to be built and tested on GitHub's Macs; not yet tried on a real one | [The Mac keyboard](#the-mac-keyboard) |
+| iPhone, Linux | Not started | |
 
 ## Try it
 
@@ -58,7 +59,8 @@ Where the rest is:
 | 3. Romanized converter | Prototype built: about 800 hand-written words plus about 122,000 imported ones, command-line demo, works through `Engine` |
 | 4. Android | First version built: a keyboard app with Khmer, Singkhmer and English layouts. Builds and passes its tests on a computer; not yet tried on a phone |
 | 5. Windows | First version built: an input method with Singkhmer and Khmer keyboards. Builds and passes its tests; not yet installed or tried in a real app |
-| 6+. Other platforms | Not started |
+| 6. Mac | First version written: an input method with the Singkhmer keyboard, the popup and My words. Not yet tried on a real Mac |
+| 7+. Other platforms | Not started |
 
 ## Layout
 
@@ -108,6 +110,20 @@ crates/khmer-windows/       the Windows keyboard (builds khmer_tsf.dll)
 windows/install.ps1         installs the Windows keyboard on this PC, or removes it
 windows/setup.ps1           the one-line install from GitHub: downloads the release, runs install.ps1
 windows/my-words.ps1        the "my words" window: My words and Share tabs (installed with a Start menu entry)
+crates/khmer-macos/         the engine as a C library for the Mac keyboard (libkhmer_macos.a)
+macos/                      the Mac keyboard (an InputMethodKit input method, in Swift)
+  Sources/khmer.h           the C functions of crates/khmer-macos, for Swift
+  Sources/Engine.swift      the Swift side of those functions
+  Sources/Session.swift     which key does what, and what goes into the app; edit this to change a key
+  Sources/InputController.swift  the keyboard: what macOS calls for each key, in each text field
+  Sources/CandidatePanel.swift   the suggestion popup (light/dark, "Add my word" and "Wrong word?")
+  Sources/MyWords.swift     the user's words files, and the Share form's link
+  Sources/MyWordsWindow.swift    the My words window: My words and Share tabs
+  Sources/Installer.swift   tells macOS that the keyboard exists (--install, --uninstall)
+  Tests/main.swift          types through Session into a stand-in text field
+  Info.plist                what macOS reads to know it is a Khmer input method
+  build.sh                  builds BunnyKeyboard.app (needs a Mac)
+  install.sh                installs it, from the latest release or a local build
 ```
 
 ## Running it
@@ -284,9 +300,10 @@ which reports the result in a message box. The release workflow writes the
 tag's version into `install.ps1` (`$Version = 'dev'`) for that entry.
 
 A release is made by pushing a tag (`git tag v0.1.0`, then
-`git push origin v0.1.0`): `.github/workflows/release-windows.yml` builds
+`git push origin v0.1.0`): `.github/workflows/release.yml` builds
 `khmer_tsf.dll` on GitHub and attaches it, `install.ps1` and `setup.ps1` to
-the release.
+the release. The same workflow then builds the Mac keyboard and adds it; see
+[The Mac keyboard](#the-mac-keyboard).
 
 To build and install from the project folder instead, in Windows PowerShell:
 
@@ -346,6 +363,116 @@ with Windows+Space and run the `-Remove` command.
   suggestion window, a settings screen.
 - An entry under "Installed apps", and a signed installer for other people's
   PCs.
+
+## The Mac keyboard
+
+`macos/` is an input method for macOS 12 (Monterey) and newer, on Apple
+silicon and Intel Macs, released as **Bunny Keyboard** like the Windows one.
+It adds **Singkhmer (Bunny Keyboard)** under Khmer in the input menu. It works
+like the Windows Singkhmer keyboard: the same keys, the same popup with
+"+ Add my word" and "Wrong word?", the same My words and Share tabs, and the
+same files (`my-words.txt`, `learned.txt`, `shared.txt`), kept in
+`~/Library/Application Support/Bunny Keyboard`. There is no Khmer NiDA
+keyboard: macOS has its own Khmer layout.
+
+How it is put together:
+
+- `crates/khmer-macos` builds the Rust engine as a static library with plain
+  C functions (`bk_on_key`, `bk_candidates`, ...). `macos/Sources/khmer.h`
+  declares them for Swift. The two must be kept in step.
+- The rest is Swift, built with `swiftc` by `macos/build.sh`; there is no
+  Xcode project. `main.swift` opens the input method connection named in
+  `Info.plist` (InputMethodKit's `IMKServer`), and macOS makes an
+  `InputController` for each text field the user types in. All of them run in
+  one process, so the dictionary is read once for every app (unlike Windows,
+  where each app reads its own copy).
+- `Session.swift` decides what each key does, with no macOS text system
+  involved, so the tests can type through it. `InputController.swift` turns
+  macOS key events into `Key`s and the session's answers into marked text and
+  inserted text.
+- The popup is a window of its own that never takes the focus. It sits under
+  the line the app reports for the marked text, or above it near the bottom
+  of the screen.
+- **My words…** in the input menu opens the My words window, as do the
+  popup's buttons. Opening it from the popup first sends the phrase as it is
+  shown, because the window takes the focus from the app. The window also
+  shows the engine's guesses for the spelling typed (`bk_convert`), to click.
+
+Keys: as in [How it types](#how-it-types) and the Windows table above. Command,
+Control and Option shortcuts go to the app, and a phrase being typed is sent
+first, so Command+Return in a chat app sends all of it. Password fields never
+reach the keyboard: macOS switches to a plain keyboard there by itself.
+
+### Building it
+
+This needs a Mac with Rust (<https://rustup.rs>) and Xcode or its command
+line tools (`xcode-select --install`). From the project folder:
+
+```
+macos/build.sh --test                                  runs the tests, then builds
+macos/install.sh --app target/macos/BunnyKeyboard.app  installs that build for this user
+```
+
+`build.sh` builds the engine for both kinds of Mac, joins them with `lipo`,
+compiles the Swift for both, and puts together
+`target/macos/BunnyKeyboard.app` (with its icon, drawn by `make-icon.swift`)
+and `BunnyKeyboard-mac.zip`. The app is signed "ad hoc" only (`codesign
+--sign -`), which an Apple silicon Mac needs to run it at all. Run both
+commands again after changing the code; `install.sh` stops the old copy, and
+macOS starts the new one the next time the keyboard is used.
+
+Without a Mac: every push that touches `macos/`, `crates/khmer-macos/` or
+`crates/khmer-core/` builds and tests it on one of GitHub's Macs
+(`.github/workflows/macos.yml`). The built zip is kept with the run, under
+Artifacts, for 14 days.
+
+### Installing it
+
+On any Mac, with no Rust and no copy of the project, in Terminal:
+
+```
+curl -fsSL https://github.com/SomnangPery/Singkhmer-Khmer/releases/latest/download/install-mac.sh | bash
+```
+
+`install-mac.sh` is `macos/install.sh`. It downloads `BunnyKeyboard-mac.zip`
+from the latest release, copies the app to `~/Library/Input Methods` (for this
+user only, so with no password), and runs it with `--install`, which
+registers it with macOS (`TISRegisterInputSource`) and turns it on
+(`TISEnableInputSource`). If macOS does not turn it on, the user adds it in
+System Settings → Keyboard → Text Input → Edit. `--remove` turns it off and
+deletes the app, and leaves the user's words.
+
+The app is not notarized by Apple. That does not stop it here, because
+Gatekeeper checks only files marked as downloaded by a browser, and `curl`
+does not mark them; the script also clears the mark in case. A zip
+downloaded in Safari and opened by hand would be blocked.
+
+The release workflow (`.github/workflows/release.yml`) builds the Mac
+keyboard after the Windows one, with the tag's version in `Info.plist`, runs
+its tests, and attaches `BunnyKeyboard-mac.zip` and `install-mac.sh` to the
+release. The install line above fails until a release has them.
+
+### Its tests
+
+`macos/build.sh --test` runs them before building:
+
+- `cargo test -p khmer-macos` checks the C functions: a phrase, Backspace,
+  picking another suggestion, checking a word, a null engine.
+- `macos/Tests/main.swift` types through `Session` into a text field that
+  exists only in memory: a phrase and the second space, the arrow keys and
+  Enter, Backspace, Esc, punctuation, a shortcut in the middle of a phrase, a
+  click in the popup, and the user's words file being added and deleted (in a
+  folder of its own, not the user's). It also checks which Mac key codes
+  become which keys, the Share form's link, and checking a word.
+
+### Not built yet
+
+- Trying it on a real Mac. macOS hands key presses only to an installed,
+  selected input method, so `InputController`, the popup's place on screen,
+  the My words window, and how Pages, Safari, Telegram or Terminal behave are
+  not covered by the tests. Neither is `install.sh`.
+- A signed and notarized app, which a download from a browser would need.
+- The Khmer NiDA keyboard, and a settings screen.
 
 ## Adding a test
 
@@ -484,11 +611,12 @@ licence allows the use, and add it to `THIRD-PARTY-NOTICES.md`.
 ### Words shared by users
 
 Users send words from the Share tab of the "My words" window
-(`windows/my-words.ps1`), and with "Wrong word?" in the popup:
+(`windows/my-words.ps1`, and `macos/Sources/MyWordsWindow.swift` on the Mac), and with "Wrong word?" in the popup:
 
 1. Picking the second or third suggestion makes the engine note the words it
    corrected (`Engine::take_corrections`); the Windows keyboard appends them to
-   `%APPDATA%\Bunny Keyboard\learned.txt` as `spelling = word`. Only those word
+   `%APPDATA%\Bunny Keyboard\learned.txt` as `spelling = word`, and the Mac
+   keyboard to the same file in `~/Library/Application Support/Bunny Keyboard`. Only those word
    pairs, never the text around them.
 2. The Share tab lists those and the user's own words. **Send** opens a Google
    Form in the browser with them pre-filled; the user presses Submit there.
@@ -579,6 +707,11 @@ people. Put them in a file in the same format and run `khmer accuracy FILE`.
 - Android Developers, *Create an input method*:
   <https://developer.android.com/develop/ui/views/touch-and-input/creating-input-method>.
   The Android app is an input method service.
+- Apple, *Input Method Kit*:
+  <https://developer.apple.com/documentation/inputmethodkit>, and the Text
+  Input Sources functions of `Carbon/HIToolbox/TextInputSources.h`
+  (`TISRegisterInputSource`, `TISEnableInputSource`). The Mac keyboard is an
+  input method of this kit.
 
 ### Libraries
 

@@ -240,6 +240,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "khmer-macos"
+version = "0.1.0"
+dependencies = [
+ "khmer-core",
+]
+
+[[package]]
 name = "khmer-windows"
 version = "0.1.0"
 dependencies = [

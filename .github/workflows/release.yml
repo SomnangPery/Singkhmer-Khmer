@@ -1,8 +1,8 @@
-# Builds the Windows keyboard and puts it on a GitHub release, so that
-# windows/setup.ps1 can install it on any PC without Rust.
+# Builds the Windows and Mac keyboards and puts them on a GitHub release, so
+# that windows/setup.ps1 and macos/install.sh can install them without Rust.
 #
 # To make a release: git tag v0.1.0 && git push origin v0.1.0
-name: Release the Windows keyboard
+name: Release
 
 on:
   push:
@@ -47,3 +47,21 @@ jobs:
           } else {
             gh release upload $env:TAG --clobber @files
           }
+
+  mac:
+    # After the Windows job, which makes the release.
+    needs: windows
+    runs-on: macos-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test BunnyKeyboard.app
+        run: VERSION="${TAG#v}" macos/build.sh --test
+
+      - name: Put it on the release
+        run: |
+          cp macos/install.sh target/macos/install-mac.sh
+          gh release upload "$TAG" --clobber target/macos/BunnyKeyboard-mac.zip target/macos/install-mac.sh
