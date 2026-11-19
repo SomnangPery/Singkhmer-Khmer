@@ -24,7 +24,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build, test, and run in the Simulator
-        run: ios/build.sh --test --screenshot
+        run: |
+          set -o pipefail
+          ios/build.sh --test --screenshot 2>&1 | tee build.log
+
+      # The errors as one annotation on the run, which can be read without
+      # signing in to GitHub (the full log needs a sign-in).
+      - name: Show the errors
+        if: failure()
+        run: |
+          { grep -E "error:|FAIL|Undefined symbol|ld: " build.log | head -40; echo "--- last lines:"; tail -15 build.log; } > errors.txt
+          echo "::error title=iPhone build::$(sed -e 's/%/%25/g' errors.txt | awk '{printf "%s%%0A", $0}')"
 
       - uses: actions/upload-artifact@v4
         with:
