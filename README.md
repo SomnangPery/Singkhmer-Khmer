@@ -13,7 +13,7 @@ phone, with no internet. Nothing is sent
 anywhere unless you choose to [share words](#help-make-it-better).
 
 Install it on [Windows](#on-windows), on a [Mac](#on-a-mac) or on
-[Android](#on-android).
+[Android](#on-android). An [iPhone](#on-iphone-and-ipad) version is on its way.
 
 > **Early version.** It works, but some words will come out wrong. Please
 > [tell us](#help-make-it-better) when they do.
@@ -129,6 +129,11 @@ email and web address fields start in English by themselves.
 
 Needs Android 8.0 or newer. To take it off again, see
 [Uninstall](#uninstall).
+
+### On iPhone and iPad
+
+> **Coming soon.** The iPhone keyboard is being built and tested, and it
+> cannot be installed yet. When it can, the steps will be here.
 
 ## How to type
 

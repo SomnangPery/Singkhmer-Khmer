@@ -2,7 +2,8 @@
 
 The user guide is the [README](../README.md). This page is for working on the code.
 
-A Khmer keyboard for Android, Windows and the Mac, with two ways of typing:
+A Khmer keyboard for Android, Windows, the Mac and (being built) the iPhone,
+with two ways of typing:
 
 - **Singkhmer.** Type Khmer the way people write it in chat, in Latin
   letters, and get Khmer script: `nh jg tv sala rean` becomes
@@ -26,7 +27,8 @@ yet.
 | Android 8.0 and newer | Builds and passes its tests; not yet tried on a phone | [The Android app](#the-android-app) |
 | Windows 10 and 11, 64-bit | Builds and passes its tests; not yet installed or tried in a real app | [The Windows keyboard](#the-windows-keyboard) |
 | macOS 12 and newer, Apple silicon and Intel | Written; to be built and tested on GitHub's Macs; not yet tried on a real one | [The Mac keyboard](#the-mac-keyboard) |
-| iPhone, Linux | Not started | |
+| iPhone and iPad, iOS 15 and newer | Builds and passes its tests on GitHub's Macs and runs in the iPhone Simulator; not yet tried on a phone | [The iPhone keyboard](#the-iphone-keyboard) |
+| Linux | Not started | |
 
 ## Try it
 
@@ -60,7 +62,8 @@ Where the rest is:
 | 4. Android | First version built: a keyboard app with Khmer, Singkhmer and English layouts. Builds and passes its tests on a computer; not yet tried on a phone |
 | 5. Windows | First version built: an input method with Singkhmer and Khmer keyboards. Builds and passes its tests; not yet installed or tried in a real app |
 | 6. Mac | First version written: an input method with the Singkhmer keyboard, the popup and My words. Not yet tried on a real Mac |
-| 7+. Other platforms | Not started |
+| 7. iPhone | First version built: a keyboard extension with the Singkhmer keys and the suggestions strip, and an app to set it up. Not yet tried on a phone |
+| 8+. Other platforms | Not started |
 
 ## Layout
 
@@ -124,6 +127,16 @@ macos/                      the Mac keyboard (an InputMethodKit input method, in
   Info.plist                what macOS reads to know it is a Khmer input method
   build.sh                  builds BunnyKeyboard.app (needs a Mac)
   install.sh                installs it, from the latest release or a local build
+ios/                        the iPhone keyboard (a keyboard extension, in Swift; uses crates/khmer-macos
+                            and macos/Sources/Engine.swift, Session.swift, khmer.h)
+  Sources/Shared/Layout.swift    which keys are on which page; edit this to move a key
+  Sources/Shared/Typist.swift    what each tap does: Shift, pages, Return, plain fields
+  Sources/Shared/KeyboardView.swift  draws the keys and the suggestions strip
+  Sources/Keyboard/KeyboardViewController.swift  the keyboard as iOS runs it in each app
+  Sources/App/App.swift     the app behind the icon: how to turn it on, and a box to try it
+  Tests/main.swift          taps through Typist into a stand-in text field
+  App-Info.plist, Keyboard-Info.plist  what iOS reads about the app and the keyboard
+  build.sh                  builds the .ipa and the Simulator app (needs a Mac with Xcode)
 ```
 
 ## Running it
@@ -493,6 +506,101 @@ release. The install line above fails until a release has them.
   not covered by the tests. Neither is `install.sh`.
 - A signed and notarized app, which a download from a browser would need.
 - The Khmer NiDA keyboard, and a settings screen.
+
+## The iPhone keyboard
+
+`ios/` is a keyboard for iPhone and iPad, iOS 15 and newer: an app,
+**Bunny Keyboard**, with a keyboard extension inside it. The keyboard has the
+Singkhmer keys of the Android keyboard (a number row, two pages of digits and
+symbols, the second with Khmer digits and letters) and the suggestions strip
+above them. There is no Khmer NiDA page: iOS has its own Khmer keyboard. It
+does not ask for Full Access, so iOS keeps it from the internet and from
+other apps.
+
+How it is put together:
+
+- The engine is the Mac keyboard's C library, `crates/khmer-macos`, built for
+  iOS (`aarch64-apple-ios`, and `aarch64-apple-ios-sim` for the Simulator).
+  The Swift side is the Mac's own `Engine.swift` and `Session.swift`, so a
+  key does the same on both.
+- `Typist.swift` decides what each tap does, with no iOS code, so the tests
+  run on a Mac. `KeyboardView.swift` draws the keys in one view: a touch
+  goes to the nearest key, and a key is typed when the finger lifts.
+- `KeyboardViewController.swift` is what iOS runs. The phrase is shown in the
+  app as marked text (`setMarkedText`), which iOS underlines, and replaced by
+  the Khmer when it is sent. When the app changes the text or the caret by
+  itself, the phrase is left as it was shown. Fields for email and web
+  addresses get the letters straight in; number fields start on the digits.
+  Password fields never reach the keyboard: iOS switches to its own there.
+- The 🌐 key is shown only when iOS asks for it (`needsInputModeSwitchKey`).
+- Keys: as on Android. Space twice sends the phrase, a tap on a suggestion
+  sends that one, Return sends the phrase and starts a new line, and
+  Backspace held down repeats.
+
+**Memory.** iOS stops a keyboard extension that uses more than about 50 to
+70 MB, depending on the phone. The dictionary is packed for this
+(`romanize/strings.rs`): about 28 MB once read, and at most 34 MB while it is
+read (it was 160 MB). It is read once each time the keyboard starts, which
+takes about a second.
+
+### Building it
+
+This needs a Mac with Rust and Xcode. There is no Xcode project: `swiftc`
+builds the app and the extension, as for the Mac keyboard.
+
+```
+ios/build.sh --test                 runs the tests, then builds
+ios/build.sh --test --screenshot    then runs it in the iPhone Simulator
+```
+
+It makes `target/ios/BunnyKeyboard-ios.ipa`, for phones, and
+`target/ios/sim/BunnyKeyboard.app`, for the Simulator. `--screenshot`
+installs the app in a Simulator, checks that iOS lists the keyboard
+extension, types `nh jg tv sala rean` into the app's "Try it" box, and saves
+`target/ios/screenshot-light.png` and `screenshot-dark.png`.
+
+Without a Mac: every push that touches `ios/` or the engine does all of this
+on one of GitHub's Macs (`.github/workflows/ios.yml`). The .ipa and the
+pictures are kept with the run, under Artifacts, for 14 days. When the build
+fails, its error lines are shown on the run's page as an annotation.
+
+### Installing it
+
+iOS installs only apps signed with an Apple account, so the .ipa is signed
+"ad hoc" only and a phone cannot install it as it is. The ways to get it on a
+phone:
+
+- **Sideloadly or AltStore**, on a Windows PC, with a free Apple ID. They sign
+  the .ipa for that one phone. Free signing runs out after 7 days, and the
+  app must be signed again.
+- **TestFlight**, with an Apple Developer account (99 USD a year): testers
+  install it from Apple's TestFlight app with a link. This needs the build
+  signed with that account, which the workflow does not do yet.
+- **The App Store**, with the same account, after Apple's review.
+
+On the phone: Settings → General → Keyboard → Keyboards → Add New Keyboard →
+Bunny Keyboard, then hold 🌐 in any app and pick it.
+
+### Its tests
+
+`ios/build.sh --test` runs `ios/Tests/main.swift`, with the real engine: the
+rows of keys fill the width, a phrase and the second space, a tap on a
+suggestion, Return, Backspace, Shift once and locked, punctuation, the pages,
+plain fields, and the phrase being sent or left when the keyboard goes away
+or the app changes the text. `--screenshot` then checks that the app runs in
+the Simulator and that iOS finds the keyboard in it.
+
+### Not built yet
+
+- Trying it on a real phone. The Simulator run does not type through the
+  keyboard extension itself, so how apps such as Telegram, Messenger or
+  Safari take the marked text, the memory limit on older phones, and the 🌐
+  key are not covered by the tests.
+- My words, learning from picked suggestions, and Share. Without Full Access
+  the keyboard cannot share files with the app, so these need a design of
+  their own.
+- A pop-up of the key under the finger, long presses, and a release on
+  GitHub. Signing for TestFlight or the App Store.
 
 ## Adding a test
 
