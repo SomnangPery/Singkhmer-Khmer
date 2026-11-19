@@ -84,7 +84,7 @@ enum Layout {
     /// Split at the spaces by code point, not by letter: a Khmer sign such as
     /// ៍ would otherwise join the space before it.
     private static func letters(_ row: String) -> [KeyCap] {
-        row.components(separatedBy: " ").map(KeyCap.letter)
+        row.unicodeScalars.split(separator: " ").map { KeyCap.letter(String(String.UnicodeScalarView($0))) }
     }
 
     private static func bottomRow(_ page: Page, globe: Bool, spaceLabel: String, enterLabel: String) -> [KeyCap] {
