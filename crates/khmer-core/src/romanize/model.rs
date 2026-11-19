@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::lexicon::{data_lines, DataError, Lexicon};
+use super::strings::Strings;
 use crate::normalize::normalize;
 
 pub trait LanguageModel: Send + Sync {
@@ -12,18 +13,26 @@ const BACKOFF: f32 = 0.4;
 const UNSEEN: f32 = 1e-7;
 
 pub struct SeedModel {
-    alone: HashMap<String, f32>,
+    /// Every word, in sorted order, with its share of all words in `alone`.
+    words: Strings,
+    alone: Vec<f32>,
     pairs: HashMap<String, HashMap<String, f32>>,
 }
 
 impl SeedModel {
     pub fn new(lexicon: &Lexicon, pairs: &str) -> Result<SeedModel, DataError> {
         let total: f32 = lexicon.words().map(|(_, count)| count).sum();
-        let alone = lexicon
-            .words()
-            .map(|(word, count)| (word.to_string(), count / total))
-            .collect();
+        let mut sorted: Vec<(&str, f32)> = lexicon.words().collect();
+        sorted.sort_by(|a, b| a.0.cmp(b.0));
+        let mut words = Strings::default();
+        let mut alone = Vec::with_capacity(sorted.len());
+        for (word, count) in sorted {
+            words.push(word);
+            alone.push(count / total);
+        }
+        words.shrink_to_fit();
         let mut model = SeedModel {
+            words,
             alone,
             pairs: HashMap::new(),
         };
@@ -79,7 +88,7 @@ impl LanguageModel for SeedModel {
             .and_then(|next| next.get(word))
             .copied()
             .unwrap_or(0.0);
-        let alone = self.alone.get(word).copied().unwrap_or(UNSEEN);
+        let alone = self.words.find_sorted(word).map_or(UNSEEN, |at| self.alone[at as usize]);
         (as_pair + BACKOFF * alone).ln()
     }
 }

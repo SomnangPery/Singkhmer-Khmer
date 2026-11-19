@@ -3,6 +3,7 @@ mod model;
 mod phrase;
 mod search;
 mod skeleton;
+mod strings;
 mod user;
 
 use std::sync::OnceLock;

@@ -1,8 +1,10 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
-use std::ops::Bound;
+use std::hash::{Hash, Hasher};
 
 use super::skeleton::skeleton;
+use super::strings::Strings;
 use crate::normalize::normalize;
 use crate::validate::is_valid;
 
@@ -31,8 +33,12 @@ impl fmt::Display for DataError {
 
 impl std::error::Error for DataError {}
 
+/// One spelling (or variant skeleton) of one word.
+#[derive(Clone, Copy)]
 struct Listed {
-    word: usize,
+    /// The spelling's number in `Lexicon::spellings` or `Lexicon::skeleton_texts`.
+    text: u32,
+    word: u32,
     score: f32,
 }
 
@@ -44,26 +50,37 @@ pub(crate) struct Candidate {
     pub fixed: bool,
 }
 
-struct Line {
-    word: String,
+struct Line<'a> {
     count: f32,
-    spellings: Vec<String>,
+    spellings: Vec<&'a str>,
 }
 
+/// The words and their spellings, packed tightly (see `strings.rs`): sorted
+/// lists searched by halving instead of maps of separate strings.
 pub struct Lexicon {
-    words: Vec<(String, f32)>,
+    /// Word number to Khmer text.
+    words: Strings,
+    counts: Vec<f32>,
     shares: Vec<f32>,
-    index: HashMap<String, usize>,
-    spellings: BTreeMap<String, Vec<Listed>>,
-    skeletons: HashMap<String, Vec<Listed>>,
+    /// Word numbers in the order of their text, to find a word.
+    by_text: Vec<u32>,
+    /// Each spelling once, in sorted order.
+    spellings: Strings,
+    /// Sorted by spelling.
+    spelled: Vec<Listed>,
+    skeleton_texts: Strings,
+    /// Sorted by skeleton, then word; one entry per skeleton and word.
+    skeletons: Vec<Listed>,
     checked_spellings: HashSet<String>,
     english: HashSet<String>,
 }
 
 impl Lexicon {
     pub fn from_tsv(words: &str, imported: &str, english: &str) -> Result<Lexicon, DataError> {
-        let mut lines: Vec<Line> = Vec::new();
-        let mut index: HashMap<String, usize> = HashMap::new();
+        let most = words.lines().count() + imported.lines().count();
+        let mut texts = Strings::default();
+        let mut lines: Vec<Line> = Vec::with_capacity(most);
+        let mut index = WordIndex::new(most);
         let mut checked_spellings = HashSet::new();
 
         for (line, text) in data_lines(words) {
@@ -72,66 +89,119 @@ impl Lexicon {
                 line,
                 message,
             };
-            let parsed = parse_line(text).map_err(error)?;
-            if index.contains_key(&parsed.word) {
-                return Err(error(format!("\"{}\" is listed twice", parsed.word)));
+            let (word, parsed) = parse_line(text).map_err(error)?;
+            if index.find_or_add(&mut texts, &word).is_some() {
+                return Err(error(format!("\"{word}\" is listed twice")));
             }
-            checked_spellings.extend(parsed.spellings.iter().cloned());
-            index.insert(parsed.word.clone(), lines.len());
+            checked_spellings.extend(parsed.spellings.iter().map(|s| s.to_string()));
             lines.push(parsed);
         }
         for (line, text) in data_lines(imported) {
-            let parsed = parse_line(text).map_err(|message| DataError {
+            let (word, parsed) = parse_line(text).map_err(|message| DataError {
                 file: "words-imported",
                 line,
                 message,
             })?;
-            match index.get(&parsed.word) {
-                Some(&known) => {
+            match index.find_or_add(&mut texts, &word) {
+                Some(known) => {
+                    let known = &mut lines[known as usize].spellings;
                     for spelling in parsed.spellings {
-                        if !lines[known].spellings.contains(&spelling) {
-                            lines[known].spellings.push(spelling);
+                        if !known.contains(&spelling) {
+                            known.push(spelling);
                         }
                     }
                 }
-                None => {
-                    index.insert(parsed.word.clone(), lines.len());
-                    lines.push(parsed);
-                }
+                None => lines.push(parsed),
             }
         }
+        drop(index);
 
+        // Built one step at a time, each step's lists freed before the next,
+        // so that reading the dictionary never needs much more memory than
+        // keeping it.
         let total: f32 = lines.iter().map(|line| line.count).sum();
-        let mut lexicon = Lexicon {
-            words: Vec::with_capacity(lines.len()),
-            shares: Vec::with_capacity(lines.len()),
-            index,
-            spellings: BTreeMap::new(),
-            skeletons: HashMap::new(),
-            checked_spellings,
-            english: HashSet::new(),
-        };
+        let entries: usize = lines.iter().map(|line| line.spellings.len()).sum();
+        let mut counts = Vec::with_capacity(lines.len());
+        let mut shares = Vec::with_capacity(lines.len());
+        let mut spelled: Vec<(&str, u32, f32)> = Vec::with_capacity(entries);
         for (id, line) in lines.into_iter().enumerate() {
             let weights: Vec<f32> = (0..line.spellings.len())
                 .map(|rank| SPELLING_DECAY.powi(rank as i32))
                 .collect();
             let weight_total: f32 = weights.iter().sum();
-            for (spelling, weight) in line.spellings.iter().zip(weights) {
-                let score = (weight / weight_total).ln();
-                lexicon
-                    .spellings
-                    .entry(spelling.clone())
-                    .or_default()
-                    .push(Listed { word: id, score });
-                let same_skeleton = lexicon.skeletons.entry(skeleton(spelling)).or_default();
-                match same_skeleton.iter_mut().find(|listed| listed.word == id) {
-                    Some(listed) => listed.score = listed.score.max(score),
-                    None => same_skeleton.push(Listed { word: id, score }),
-                }
+            for (spelling, weight) in line.spellings.iter().copied().zip(weights) {
+                spelled.push((spelling, id as u32, (weight / weight_total).ln()));
             }
-            lexicon.shares.push((line.count / total).ln());
-            lexicon.words.push((line.word, line.count));
+            shares.push((line.count / total).ln());
+            counts.push(line.count);
         }
+
+        // Each spelling once, sorted; the entries point at it.
+        spelled.sort_unstable_by(|a, b| a.0.cmp(b.0).then(a.1.cmp(&b.1)));
+        let mut spellings = Strings::default();
+        let listed: Vec<Listed> = spelled
+            .iter()
+            .enumerate()
+            .map(|(at, &(spelling, word, score))| {
+                if at == 0 || spelled[at - 1].0 != spelling {
+                    spellings.push(spelling);
+                }
+                Listed { text: (spellings.len() - 1) as u32, word, score }
+            })
+            .collect();
+        drop(spelled);
+        let spelled = listed;
+
+        // The same for the skeletons, keeping the best score of each word.
+        let mut skeleton_list = Strings::default();
+        let mut skeletons: Vec<Listed> = Vec::with_capacity(spelled.len());
+        for (at, listed) in spelled.iter().enumerate() {
+            if at == 0 || spelled[at - 1].text != listed.text {
+                skeleton_list.push(&skeleton(spellings.get(listed.text)));
+            }
+            skeletons.push(Listed { text: (skeleton_list.len() - 1) as u32, ..*listed });
+        }
+        skeletons.sort_unstable_by(|a, b| {
+            skeleton_list.get(a.text).cmp(skeleton_list.get(b.text)).then(a.word.cmp(&b.word))
+        });
+        let mut skeleton_texts = Strings::default();
+        let mut kept = 0;
+        let mut last: Option<&str> = None;
+        for at in 0..skeletons.len() {
+            let listed = skeletons[at];
+            let text = skeleton_list.get(listed.text);
+            if last != Some(text) {
+                skeleton_texts.push(text);
+                last = Some(text);
+            } else if skeletons[kept - 1].word == listed.word {
+                skeletons[kept - 1].score = skeletons[kept - 1].score.max(listed.score);
+                continue;
+            }
+            skeletons[kept] = Listed { text: (skeleton_texts.len() - 1) as u32, ..listed };
+            kept += 1;
+        }
+        skeletons.truncate(kept);
+        drop(skeleton_list);
+
+        let mut by_text: Vec<u32> = (0..texts.len() as u32).collect();
+        by_text.sort_by(|&a, &b| texts.get(a).cmp(texts.get(b)));
+        texts.shrink_to_fit();
+        spellings.shrink_to_fit();
+        skeleton_texts.shrink_to_fit();
+        skeletons.shrink_to_fit();
+
+        let mut lexicon = Lexicon {
+            words: texts,
+            counts,
+            shares,
+            by_text,
+            spellings,
+            spelled,
+            skeleton_texts,
+            skeletons,
+            checked_spellings,
+            english: HashSet::new(),
+        };
         for (_, text) in data_lines(english) {
             lexicon.english.insert(text.trim().to_ascii_lowercase());
         }
@@ -143,15 +213,22 @@ impl Lexicon {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.words.is_empty()
+        self.words.len() == 0
     }
 
     pub fn contains(&self, word: &str) -> bool {
-        self.index.contains_key(word)
+        self.by_text.binary_search_by(|&id| self.words.get(id).cmp(word)).is_ok()
     }
 
     pub fn words(&self) -> impl Iterator<Item = (&str, f32)> {
-        self.words.iter().map(|(word, count)| (word.as_str(), *count))
+        self.words.iter().zip(self.counts.iter().copied())
+    }
+
+    /// The entries of `list` whose text is `key`.
+    fn listed<'a>(list: &'a [Listed], texts: &Strings, key: &str) -> &'a [Listed] {
+        let start = list.partition_point(|listed| texts.get(listed.text) < key);
+        let end = start + list[start..].partition_point(|listed| texts.get(listed.text) == key);
+        &list[start..end]
     }
 
     pub(crate) fn candidates(&self, token: &str) -> Vec<Candidate> {
@@ -164,40 +241,38 @@ impl Lexicon {
             }];
         }
         let typed = token.to_ascii_lowercase();
-        let mut found: BTreeMap<usize, f32> = BTreeMap::new();
-        let mut keep_best = |word: usize, score: f32| {
+        let mut found: BTreeMap<u32, f32> = BTreeMap::new();
+        let mut keep_best = |word: u32, score: f32| {
             let best = found.entry(word).or_insert(f32::NEG_INFINITY);
             *best = best.max(score);
         };
 
-        let exact = self.spellings.get(&typed);
-        for listed in exact.into_iter().flatten() {
+        for listed in Lexicon::listed(&self.spelled, &self.spellings, &typed) {
             keep_best(listed.word, listed.score);
         }
-        for listed in self.skeletons.get(&skeleton(&typed)).into_iter().flatten() {
+        for listed in Lexicon::listed(&self.skeletons, &self.skeleton_texts, &skeleton(&typed)) {
             keep_best(listed.word, listed.score + VARIANT);
         }
-        let longer = (Bound::Excluded(typed.as_str()), Bound::Unbounded);
-        for (spelling, words) in self.spellings.range::<str, _>(longer) {
+        let longer = self.spelled.partition_point(|listed| self.spellings.get(listed.text) <= typed.as_str());
+        for listed in &self.spelled[longer..] {
+            let spelling = self.spellings.get(listed.text);
             if !spelling.starts_with(&typed) {
                 break;
             }
             let missing = (spelling.len() - typed.len()) as f32;
-            for listed in words {
-                keep_best(listed.word, listed.score + PREFIX + missing * PREFIX_PER_LETTER);
-            }
+            keep_best(listed.word, listed.score + PREFIX + missing * PREFIX_PER_LETTER);
         }
 
-        let mut found: Vec<(usize, f32)> = found.into_iter().collect();
+        let mut found: Vec<(u32, f32)> = found.into_iter().collect();
         if found.len() > MAX_CANDIDATES {
-            let worth = |&(word, score): &(usize, f32)| score + self.shares[word];
+            let worth = |&(word, score): &(u32, f32)| score + self.shares[word as usize];
             found.sort_by(|a, b| worth(b).total_cmp(&worth(a)).then(a.0.cmp(&b.0)));
             found.truncate(MAX_CANDIDATES);
         }
         let mut candidates: Vec<Candidate> = found
             .into_iter()
             .map(|(word, score)| Candidate {
-                text: self.words[word].0.clone(),
+                text: self.words.get(word).to_string(),
                 latin: false,
                 score,
                 fixed: false,
@@ -220,7 +295,41 @@ impl Lexicon {
     }
 }
 
-fn parse_line(line: &str) -> Result<Line, String> {
+/// Word numbers by text, while the dictionary is read: a table of numbers
+/// into `Strings` rather than a map holding a second copy of every word.
+struct WordIndex {
+    slots: Vec<u32>,
+}
+
+impl WordIndex {
+    const EMPTY: u32 = u32::MAX;
+
+    /// Room for `most` words, never more.
+    fn new(most: usize) -> WordIndex {
+        WordIndex { slots: vec![WordIndex::EMPTY; (most * 2).next_power_of_two().max(2)] }
+    }
+
+    /// The number of `word` if it was added before; otherwise adds it to
+    /// `texts` and returns None.
+    fn find_or_add(&mut self, texts: &mut Strings, word: &str) -> Option<u32> {
+        let mut hasher = DefaultHasher::new();
+        word.hash(&mut hasher);
+        let mask = self.slots.len() - 1;
+        let mut slot = hasher.finish() as usize & mask;
+        loop {
+            match self.slots[slot] {
+                WordIndex::EMPTY => {
+                    self.slots[slot] = texts.push(word);
+                    return None;
+                }
+                id if texts.get(id) == word => return Some(id),
+                _ => slot = (slot + 1) & mask,
+            }
+        }
+    }
+}
+
+fn parse_line(line: &str) -> Result<(String, Line<'_>), String> {
     let mut columns = line.split('\t');
     let word = normalize(columns.next().unwrap_or("").trim());
     let count = columns.next().unwrap_or("").trim();
@@ -236,17 +345,17 @@ fn parse_line(line: &str) -> Result<Line, String> {
         Ok(count) if count > 0.0 => count,
         _ => return Err(format!("\"{count}\" should be a number above zero")),
     };
-    let spellings: Vec<String> = spellings.split(',').map(|s| s.trim().to_string()).collect();
+    let spellings: Vec<&str> = spellings.split(',').map(str::trim).collect();
     let mut seen = HashSet::new();
     for spelling in &spellings {
         if spelling.is_empty() || !spelling.chars().all(|c| c.is_ascii_lowercase()) {
             return Err(format!("spelling \"{spelling}\" should be letters a-z only"));
         }
-        if !seen.insert(spelling.as_str()) {
+        if !seen.insert(*spelling) {
             return Err(format!("spelling \"{spelling}\" is listed twice"));
         }
     }
-    Ok(Line { word, count, spellings })
+    Ok((word, Line { count, spellings }))
 }
 
 pub(crate) fn data_lines(text: &str) -> impl Iterator<Item = (usize, &str)> {

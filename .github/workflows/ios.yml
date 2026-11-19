@@ -1,0 +1,41 @@
+# Builds and tests the iPhone keyboard on every push that touches it, on one
+# of GitHub's Macs, then runs it in the iPhone Simulator and takes pictures.
+# Kept with the run for 14 days (Summary > Artifacts): BunnyKeyboard-ios (the
+# .ipa, to sign and install on a phone) and ios-screenshots.
+name: iPhone keyboard
+
+on:
+  push:
+    paths:
+      - 'ios/**'
+      - 'macos/Sources/Engine.swift'
+      - 'macos/Sources/Session.swift'
+      - 'macos/Sources/khmer.h'
+      - 'crates/khmer-core/**'
+      - 'crates/khmer-macos/**'
+      - 'Cargo.lock'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build, test, and run in the Simulator
+        run: ios/build.sh --test --screenshot
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BunnyKeyboard-ios
+          path: target/ios/BunnyKeyboard-ios.ipa
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: target/ios/screenshot-*.png
+          if-no-files-found: ignore
+          retention-days: 14
